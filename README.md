@@ -110,7 +110,7 @@ To switch from mock API to Firebase:
 const USE_FIREBASE = true;  // Change from false to true
 ```
 
-**Important:** For assignment submission, keep `USE_FIREBASE = false` (default).
+**Important:** For assignment submission, I kept `USE_FIREBASE = false` (default).
 
 ### Firebase Features
 
