@@ -7,6 +7,9 @@ import {
   TouchableOpacity,
   Alert,
   Share,
+  Image,
+  Modal,
+  Dimensions,
 } from 'react-native';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -17,6 +20,8 @@ import { PriorityBadge } from '../components/PriorityBadge';
 import { RootStackParamList } from '../types';
 import { formatDate } from '../utils/formatDate';
 import { fontStyles } from '../utils/fonts';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 type RouteProps = RouteProp<RootStackParamList, 'IssueDetail'>;
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -44,6 +49,8 @@ export const IssueDetailScreen: React.FC = () => {
   const closeIssue = useIssueStore(s => s.closeIssue);
   const deleteIssue = useIssueStore(s => s.deleteIssue);
   const exportToJSON = useIssueStore(s => s.exportToJSON);
+
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const issue = getIssueById(issueId);
 
@@ -152,6 +159,27 @@ export const IssueDetailScreen: React.FC = () => {
         <Text style={[styles.description, { color: c.text }]}>{issue.description}</Text>
       </View>
 
+      {/* Attachments */}
+      {issue.attachments && issue.attachments.length > 0 && (
+        <View style={[styles.card, { backgroundColor: c.surface, borderColor: c.border }]}>
+          <Text style={[styles.sectionTitle, { color: c.textSecondary }]}>
+            Attachments ({issue.attachments.length})
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
+            {issue.attachments.map((img) => (
+              <TouchableOpacity
+                key={img.id}
+                style={[styles.imageContainer, { borderColor: c.border }]}
+                onPress={() => setSelectedImage(img.uri)}
+                activeOpacity={0.8}
+              >
+                <Image source={{ uri: img.uri }} style={styles.image} resizeMode="cover" />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
       {/* Metadata */}
       <View style={[styles.card, { backgroundColor: c.surface, borderColor: c.border }]}>
         <Text style={[styles.sectionTitle, { color: c.textSecondary }]}>Details</Text>
@@ -202,6 +230,41 @@ export const IssueDetailScreen: React.FC = () => {
           <Text style={[styles.actionBtnText, { color: c.error }]}>🗑️  Delete Issue</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Full Screen Image Viewer Modal */}
+      <Modal
+        visible={selectedImage !== null}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setSelectedImage(null)}
+      >
+        <View style={styles.modalContainer}>
+          <TouchableOpacity
+            style={styles.modalBackdrop}
+            activeOpacity={1}
+            onPress={() => setSelectedImage(null)}
+          >
+            <View style={styles.modalContent}>
+              {selectedImage && (
+                <Image
+                  source={{ uri: selectedImage }}
+                  style={styles.fullImage}
+                  resizeMode="contain"
+                />
+              )}
+            </View>
+          </TouchableOpacity>
+          
+          {/* Close Button */}
+          <TouchableOpacity
+            style={[styles.closeBtn, { backgroundColor: c.error }]}
+            onPress={() => setSelectedImage(null)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.closeBtnText}>✕</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -228,6 +291,21 @@ const styles = StyleSheet.create({
   badges: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   sectionTitle: { fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5, ...fontStyles.bodyBold },
   description: { fontSize: 15, lineHeight: 23, ...fontStyles.body },
+  imageScroll: {
+    marginTop: 8,
+  },
+  imageContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 12,
+    marginRight: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -246,5 +324,46 @@ const styles = StyleSheet.create({
   deleteBtn: {
     backgroundColor: 'transparent',
     borderWidth: 1.5,
+  },
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+  },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullImage: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  closeBtnText: {
+    color: '#fff',
+    fontSize: 24,
+    lineHeight: 26,
+    ...fontStyles.heading,
   },
 });

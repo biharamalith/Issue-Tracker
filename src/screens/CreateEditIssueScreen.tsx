@@ -15,9 +15,10 @@ import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useIssueStore } from '../store/issueStore';
 import { useTheme } from '../hooks/useTheme';
-import { Priority, Status, RootStackParamList } from '../types';
+import { Priority, Status, RootStackParamList, ImageAttachment } from '../types';
 import { validateIssueForm } from '../utils/formatDate';
 import { fontStyles } from '../utils/fonts';
+import { ImagePicker } from '../components/ImagePicker';
 
 type RouteProps = RouteProp<RootStackParamList, 'CreateEditIssue'>;
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -88,6 +89,7 @@ export const CreateEditIssueScreen: React.FC = () => {
   const [priority, setPriority] = useState<Priority>(existingIssue?.priority ?? 'medium');
   const [status, setStatus] = useState<Status>(existingIssue?.status ?? 'open');
   const [assignee, setAssignee] = useState(existingIssue?.assignee ?? '');
+  const [attachments, setAttachments] = useState<ImageAttachment[]>(existingIssue?.attachments ?? []);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
 
@@ -105,7 +107,14 @@ export const CreateEditIssueScreen: React.FC = () => {
     setIsSaving(true);
     try {
       if (isEditing && issueId) {
-        await updateIssue(issueId, { title, description, priority, status, assignee: assignee || undefined });
+        await updateIssue(issueId, { 
+          title, 
+          description, 
+          priority, 
+          status, 
+          assignee: assignee || undefined,
+          attachments,
+        });
         Alert.alert('Updated', 'Issue saved locally.', [
           { text: 'OK', onPress: () => navigation.goBack() },
         ]);
@@ -116,6 +125,7 @@ export const CreateEditIssueScreen: React.FC = () => {
           priority,
           status,
           assignee: assignee || undefined,
+          attachments,
         });
         Alert.alert('Created', 'Issue saved locally and will sync when online.', [
           { text: 'View Issue', onPress: () => navigation.replace('IssueDetail', { issueId: newIssue.id }) },
@@ -225,6 +235,13 @@ export const CreateEditIssueScreen: React.FC = () => {
             placeholderTextColor={c.placeholder}
           />
         </View>
+
+        {/* Image Attachments */}
+        <ImagePicker
+          attachments={attachments}
+          onAttachmentsChange={setAttachments}
+          maxImages={3}
+        />
 
         {/* Offline notice */}
         <View style={[styles.offlineBanner, { backgroundColor: c.primaryLight, borderColor: c.primary + '40' }]}>

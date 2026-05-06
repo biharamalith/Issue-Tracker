@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   SafeAreaView,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -19,6 +20,32 @@ import { fontStyles } from '../utils/fonts';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
+// Constants for consistent sizing
+const SPACING = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 28,
+};
+
+const ICON_SIZES = {
+  small: 18,
+  medium: 20,
+  large: 24,
+  xlarge: 36,
+};
+
+const BORDER_RADIUS = {
+  small: 10,
+  medium: 12,
+  large: 16,
+  xlarge: 18,
+  xxlarge: 20,
+  round: 24,
+};
+
 const StatCard: React.FC<{
   label: string;
   count: number;
@@ -26,23 +53,43 @@ const StatCard: React.FC<{
   bg: string;
   icon: string;
   onPress: () => void;
-}> = ({ label, count, color, bg, icon, onPress }) => {
+}> = React.memo(({ label, count, color, bg, icon, onPress }) => {
   const { theme } = useTheme();
   const c = theme.colors;
+  
+  const progressWidth = useMemo(() => {
+    return Math.min((count / 10) * 100, 100);
+  }, [count]);
+
   return (
     <TouchableOpacity
       style={[styles.statCard, { backgroundColor: c.surface }]}
       onPress={onPress}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}: ${count} issues`}
+      accessibilityHint="Tap to view filtered list"
     >
-      <View style={[styles.statIcon, { backgroundColor: bg }]}>
-        <Text style={styles.statIconText}>{icon}</Text>
+      <View style={styles.statCardHeader}>
+        <View style={[styles.statIcon, { backgroundColor: bg }]}>
+          <Text style={styles.statIconText}>{icon}</Text>
+        </View>
+        <Text style={[styles.statLabel, { color: c.textSecondary }]} numberOfLines={1}>
+          {label}
+        </Text>
       </View>
       <Text style={[styles.statCount, { color: c.text }]}>{count}</Text>
-      <Text style={[styles.statLabel, { color: c.textSecondary }]}>{label}</Text>
+      <View style={[styles.statProgress, { backgroundColor: c.border }]}>
+        <View 
+          style={[
+            styles.statProgressBar, 
+            { backgroundColor: color, width: `${progressWidth}%` }
+          ]} 
+        />
+      </View>
     </TouchableOpacity>
   );
-};
+});
 
 export const DashboardScreen: React.FC = () => {
   const { theme, isDark, toggleTheme } = useTheme();
@@ -50,15 +97,26 @@ export const DashboardScreen: React.FC = () => {
   const navigation = useNavigation<Nav>();
   const user = useAuthStore(s => s.user);
   const logout = useAuthStore(s => s.logout);
-  const { getDashboardCounts, fetchFromApi, isLoading, lastSynced, syncQueue } = useIssueStore();
+  const { getDashboardCounts, fetchFromApi, isLoading, lastSynced } = useIssueStore();
   const counts = getDashboardCounts();
 
-  const handleRefresh = () => fetchFromApi();
+  const handleRefresh = useCallback(() => {
+    fetchFromApi();
+  }, [fetchFromApi]);
 
-  const goToListWithFilter = (status: Status | 'all') => {
+  const goToListWithFilter = useCallback((status: Status | 'all') => {
     useIssueStore.getState().setFilters({ status, search: '', priority: 'all' });
     navigation.navigate('Main');
-  };
+  }, [navigation]);
+
+  const formattedSyncTime = useMemo(() => {
+    if (!lastSynced) return null;
+    return new Date(lastSynced).toLocaleTimeString();
+  }, [lastSynced]);
+
+  const userInitial = useMemo(() => {
+    return user?.name?.charAt(0).toUpperCase() || 'U';
+  }, [user?.name]);
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: c.surface }]}>
@@ -76,25 +134,31 @@ export const DashboardScreen: React.FC = () => {
       <View style={styles.header}>
         <View style={styles.userInfo}>
           <View style={[styles.avatar, { backgroundColor: c.primary }]}>
-            <Text style={styles.avatarText}>
-              {user?.name?.charAt(0).toUpperCase() || 'U'}
-            </Text>
+            <Text style={styles.avatarText}>{userInitial}</Text>
           </View>
-          <View>
+          <View style={styles.userTextContainer}>
             <Text style={[styles.greeting, { color: c.textMuted }]}>Good day 👋</Text>
-            <Text style={[styles.userName, { color: c.text }]}>{user?.name ?? 'User'}</Text>
+            <Text style={[styles.userName, { color: c.text }]} numberOfLines={1}>
+              {user?.name ?? 'User'}
+            </Text>
           </View>
         </View>
         <View style={styles.headerActions}>
           <TouchableOpacity 
             onPress={toggleTheme} 
             style={[styles.iconBtn, { backgroundColor: c.surface }]}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`Switch to ${isDark ? 'light' : 'dark'} mode`}
           >
-            <Text style={{ fontSize: 18 }}>{isDark ? '☀️' : '🌙'}</Text>
+            <Text style={styles.iconBtnText}>{isDark ? '☀️' : '🌙'}</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             onPress={logout} 
             style={[styles.logoutBtn, { backgroundColor: c.surface }]}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Logout"
           >
             <Text style={[styles.logoutText, { color: c.error }]}>Logout</Text>
           </TouchableOpacity>
@@ -105,55 +169,64 @@ export const DashboardScreen: React.FC = () => {
       <View style={[styles.totalCard, { backgroundColor: c.primary }]}>
         <Text style={styles.totalLabel}>Total Issues</Text>
         <Text style={styles.totalCount}>{counts.total}</Text>
-        {lastSynced && (
+        {formattedSyncTime && (
           <Text style={styles.totalSync}>
-            Last synced {new Date(lastSynced).toLocaleTimeString()}
+            Last synced {formattedSyncTime}
           </Text>
         )}
       </View>
 
       {/* Stats grid */}
-      <Text style={[styles.sectionTitle, { color: c.text }]}>By Status</Text>
-      <View style={styles.statsGrid}>
-        <StatCard
-          label="Open"
-          count={counts.open}
-          color={c.statusOpen}
-          bg={c.statusOpenBg}
-          icon="🔵"
-          onPress={() => goToListWithFilter('open')}
-        />
-        <StatCard
-          label="In Progress"
-          count={counts.in_progress}
-          color={c.statusInProgress}
-          bg={c.statusInProgressBg}
-          icon="🟡"
-          onPress={() => goToListWithFilter('in_progress')}
-        />
-        <StatCard
-          label="Resolved"
-          count={counts.resolved}
-          color={c.statusResolved}
-          bg={c.statusResolvedBg}
-          icon="🟢"
-          onPress={() => goToListWithFilter('resolved')}
-        />
-        <StatCard
-          label="Closed"
-          count={counts.closed}
-          color={c.statusClosed}
-          bg={c.statusClosedBg}
-          icon="⚫"
-          onPress={() => goToListWithFilter('closed')}
-        />
+      <View style={styles.statsSection}>
+        <View style={styles.statsSectionHeader}>
+          <Text style={[styles.sectionTitle, { color: c.text }]}>By Status</Text>
+          <Text style={[styles.sectionSubtitle, { color: c.textMuted }]}>
+            {counts.total} total
+          </Text>
+        </View>
+        <View style={styles.statsGrid}>
+          <StatCard
+            label="Open"
+            count={counts.open}
+            color={c.statusOpen}
+            bg={c.statusOpenBg}
+            icon="🔵"
+            onPress={() => goToListWithFilter('open')}
+          />
+          <StatCard
+            label="In Progress"
+            count={counts.in_progress}
+            color={c.statusInProgress}
+            bg={c.statusInProgressBg}
+            icon="🟡"
+            onPress={() => goToListWithFilter('in_progress')}
+          />
+          <StatCard
+            label="Resolved"
+            count={counts.resolved}
+            color={c.statusResolved}
+            bg={c.statusResolvedBg}
+            icon="🟢"
+            onPress={() => goToListWithFilter('resolved')}
+          />
+          <StatCard
+            label="Closed"
+            count={counts.closed}
+            color={c.statusClosed}
+            bg={c.statusClosedBg}
+            icon="⚫"
+            onPress={() => goToListWithFilter('closed')}
+          />
+        </View>
       </View>
 
       {/* Quick action */}
       <TouchableOpacity
         style={[styles.createBtn, { backgroundColor: c.primary }]}
         onPress={() => navigation.navigate('CreateEditIssue', {})}
-        activeOpacity={0.85}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel="Create new issue"
       >
         <Text style={styles.createBtnText}>+ Create New Issue</Text>
       </TouchableOpacity>
@@ -163,106 +236,226 @@ export const DashboardScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
-  container: { flex: 1 },
-  content: { padding: 20, paddingBottom: 100, gap: 20 },
+  safeArea: { 
+    flex: 1,
+  },
+  container: { 
+    flex: 1,
+  },
+  content: { 
+    padding: SPACING.xl,
+    paddingBottom: 100,
+    gap: SPACING.xl,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   },
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: SPACING.md,
+    flex: 1,
+  },
+  userTextContainer: {
+    flex: 1,
   },
   avatar: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: BORDER_RADIUS.round,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: ICON_SIZES.medium,
     ...fontStyles.headingMedium,
   },
-  greeting: { fontSize: 12, ...fontStyles.body, marginBottom: 2 },
-  userName: { fontSize: 18, ...fontStyles.headingMedium },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  greeting: { 
+    fontSize: 12,
+    ...fontStyles.body,
+    marginBottom: 2,
+  },
+  userName: { 
+    fontSize: 18,
+    ...fontStyles.headingMedium,
+  },
+  headerActions: { 
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
   iconBtn: { 
-    padding: 10,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    width: 40,
+    height: 40,
+    borderRadius: BORDER_RADIUS.medium,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  iconBtnText: {
+    fontSize: ICON_SIZES.small,
   },
   logoutBtn: {
-    borderRadius: 12,
+    borderRadius: BORDER_RADIUS.medium,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
-  logoutText: { fontSize: 13, ...fontStyles.bodyMedium },
+  logoutText: { 
+    fontSize: 13,
+    ...fontStyles.bodyMedium,
+  },
   totalCard: {
-    borderRadius: 20,
-    padding: 28,
+    borderRadius: BORDER_RADIUS.xxlarge,
+    padding: SPACING.xxl,
     alignItems: 'center',
-    gap: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    gap: SPACING.xs,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
-  totalLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 14, ...fontStyles.bodyMedium },
-  totalCount: { color: '#fff', fontSize: 56, ...fontStyles.heading, letterSpacing: -2 },
-  totalSync: { color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 4, ...fontStyles.body },
-  sectionTitle: { fontSize: 17, ...fontStyles.headingMedium, marginBottom: -4 },
+  totalLabel: { 
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
+    ...fontStyles.bodyMedium,
+  },
+  totalCount: { 
+    color: '#fff',
+    fontSize: 56,
+    ...fontStyles.heading,
+    letterSpacing: -2,
+  },
+  totalSync: { 
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 11,
+    marginTop: SPACING.xs,
+    ...fontStyles.body,
+  },
+  statsSection: {
+    gap: SPACING.md,
+  },
+  statsSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.xs,
+  },
+  sectionTitle: { 
+    fontSize: 17,
+    ...fontStyles.headingMedium,
+  },
+  sectionSubtitle: { 
+    fontSize: 13,
+    ...fontStyles.body,
+  },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: SPACING.md,
   },
   statCard: {
     width: '47.5%',
-    borderRadius: 18,
-    padding: 18,
-    gap: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 2,
+    borderRadius: BORDER_RADIUS.xlarge,
+    padding: SPACING.lg,
+    gap: SPACING.md,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  statCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
   },
   statIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: ICON_SIZES.xlarge,
+    height: ICON_SIZES.xlarge,
+    borderRadius: BORDER_RADIUS.small,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  statIconText: { fontSize: 20 },
-  statCount: { fontSize: 36, ...fontStyles.heading, letterSpacing: -1 },
-  statLabel: { fontSize: 13, ...fontStyles.bodyMedium },
+  statIconText: { 
+    fontSize: ICON_SIZES.small,
+  },
+  statLabel: { 
+    fontSize: 12,
+    ...fontStyles.bodyMedium,
+    flex: 1,
+  },
+  statCount: { 
+    fontSize: 32,
+    ...fontStyles.heading,
+    letterSpacing: -1,
+  },
+  statProgress: {
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  statProgressBar: {
+    height: '100%',
+    borderRadius: 2,
+  },
   createBtn: {
-    borderRadius: 16,
+    borderRadius: BORDER_RADIUS.large,
     paddingVertical: 18,
     alignItems: 'center',
-    marginTop: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    marginTop: SPACING.sm,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
-  createBtnText: { color: '#fff', fontSize: 16, ...fontStyles.headingMedium },
+  createBtnText: { 
+    color: '#fff',
+    fontSize: 16,
+    ...fontStyles.headingMedium,
+  },
 });

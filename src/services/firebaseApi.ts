@@ -19,6 +19,7 @@ import {
 } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import { Issue } from '../types';
+import { prepareAttachmentsForFirebase } from '../utils/imageUtils';
 
 const ISSUES_COLLECTION = 'issues';
 
@@ -113,6 +114,7 @@ export const firebaseApi = {
           priority: data.priority,
           status: data.status,
           assignee: data.assignee,
+          attachments: data.attachments || [], // Attachments already in base64 format
           createdAt: timestampToISO(data.createdAt),
           updatedAt: timestampToISO(data.updatedAt),
         } as Issue;
@@ -132,12 +134,18 @@ export const firebaseApi = {
       const issuesRef = collection(db, ISSUES_COLLECTION);
       const now = new Date().toISOString();
       
+      // Convert image attachments to base64 for Firebase storage
+      const preparedAttachments = issue.attachments 
+        ? await prepareAttachmentsForFirebase(issue.attachments)
+        : [];
+      
       const docRef = await addDoc(issuesRef, {
         title: issue.title,
         description: issue.description,
         priority: issue.priority,
         status: issue.status,
         assignee: issue.assignee || null,
+        attachments: preparedAttachments,
         createdAt: now,
         updatedAt: now,
       });
@@ -145,6 +153,7 @@ export const firebaseApi = {
       const newIssue: Issue = {
         ...issue,
         id: docRef.id,
+        attachments: preparedAttachments,
         createdAt: now,
         updatedAt: now,
       };
@@ -163,10 +172,20 @@ export const firebaseApi = {
       const issueRef = doc(db, ISSUES_COLLECTION, id);
       const now = new Date().toISOString();
       
+      // Convert image attachments to base64 if present
+      const preparedAttachments = updates.attachments 
+        ? await prepareAttachmentsForFirebase(updates.attachments)
+        : undefined;
+      
       const updateData: any = {
         ...updates,
         updatedAt: now,
       };
+      
+      // Add prepared attachments if they exist
+      if (preparedAttachments !== undefined) {
+        updateData.attachments = preparedAttachments;
+      }
       
       // Remove fields that shouldn't be updated
       delete updateData.id;
@@ -190,6 +209,7 @@ export const firebaseApi = {
         priority: data.priority,
         status: data.status,
         assignee: data.assignee,
+        attachments: data.attachments || [],
         createdAt: timestampToISO(data.createdAt),
         updatedAt: timestampToISO(data.updatedAt),
       };

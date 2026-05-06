@@ -4,7 +4,7 @@ import { firebaseApi } from './firebaseApi';
 // Toggle between mock and Firebase API
 // Set to false for assignment submission (uses mock API as required)
 // Set to true to enable Firebase backend (optional bonus feature)
-const USE_FIREBASE = false;  // ← Change to true for Firebase
+const USE_FIREBASE = true;  // ← Change to true for Firebase
 
 const MOCK_DELAY = 800;
 
