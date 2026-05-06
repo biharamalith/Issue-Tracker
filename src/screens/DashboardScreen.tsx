@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -30,14 +31,14 @@ const StatCard: React.FC<{
   const c = theme.colors;
   return (
     <TouchableOpacity
-      style={[styles.statCard, { backgroundColor: c.surface, borderColor: c.border }]}
+      style={[styles.statCard, { backgroundColor: c.surface }]}
       onPress={onPress}
       activeOpacity={0.7}
     >
       <View style={[styles.statIcon, { backgroundColor: bg }]}>
         <Text style={styles.statIconText}>{icon}</Text>
       </View>
-      <Text style={[styles.statCount, { color }]}>{count}</Text>
+      <Text style={[styles.statCount, { color: c.text }]}>{count}</Text>
       <Text style={[styles.statLabel, { color: c.textSecondary }]}>{label}</Text>
     </TouchableOpacity>
   );
@@ -60,28 +61,42 @@ export const DashboardScreen: React.FC = () => {
   };
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: c.background }]}
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} tintColor={c.primary} />
-      }
-    >
-      {/* Network Status Bar */}
-      <NetworkStatusBar />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: c.surface }]}>
+      <ScrollView
+        style={[styles.container, { backgroundColor: c.background }]}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} tintColor={c.primary} />
+        }
+      >
+        {/* Network Status Bar */}
+        <NetworkStatusBar />
 
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={[styles.greeting, { color: c.textMuted }]}>Good day 👋</Text>
-          <Text style={[styles.userName, { color: c.text }]}>{user?.name ?? 'User'}</Text>
+        <View style={styles.userInfo}>
+          <View style={[styles.avatar, { backgroundColor: c.primary }]}>
+            <Text style={styles.avatarText}>
+              {user?.name?.charAt(0).toUpperCase() || 'U'}
+            </Text>
+          </View>
+          <View>
+            <Text style={[styles.greeting, { color: c.textMuted }]}>Good day 👋</Text>
+            <Text style={[styles.userName, { color: c.text }]}>{user?.name ?? 'User'}</Text>
+          </View>
         </View>
         <View style={styles.headerActions}>
-          <TouchableOpacity onPress={toggleTheme} style={styles.iconBtn}>
-            <Text style={{ fontSize: 20 }}>{isDark ? '☀️' : '🌙'}</Text>
+          <TouchableOpacity 
+            onPress={toggleTheme} 
+            style={[styles.iconBtn, { backgroundColor: c.surface }]}
+          >
+            <Text style={{ fontSize: 18 }}>{isDark ? '☀️' : '🌙'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={logout} style={[styles.logoutBtn, { borderColor: c.border }]}>
-            <Text style={[styles.logoutText, { color: c.textSecondary }]}>Logout</Text>
+          <TouchableOpacity 
+            onPress={logout} 
+            style={[styles.logoutBtn, { backgroundColor: c.surface }]}
+          >
+            <Text style={[styles.logoutText, { color: c.error }]}>Logout</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -142,67 +157,112 @@ export const DashboardScreen: React.FC = () => {
       >
         <Text style={styles.createBtnText}>+ Create New Issue</Text>
       </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: { flex: 1 },
   container: { flex: 1 },
-  content: { padding: 20, gap: 16 },
+  content: { padding: 20, paddingBottom: 100, gap: 20 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 4,
   },
-  greeting: { fontSize: 13, ...fontStyles.body },
-  userName: { fontSize: 22, ...fontStyles.heading },
-  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  iconBtn: { padding: 4 },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    color: '#fff',
+    fontSize: 20,
+    ...fontStyles.headingMedium,
+  },
+  greeting: { fontSize: 12, ...fontStyles.body, marginBottom: 2 },
+  userName: { fontSize: 18, ...fontStyles.headingMedium },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  iconBtn: { 
+    padding: 10,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
   logoutBtn: {
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   logoutText: { fontSize: 13, ...fontStyles.bodyMedium },
   totalCard: {
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: 20,
+    padding: 28,
     alignItems: 'center',
     gap: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  totalLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 14, ...fontStyles.bodyMedium },
-  totalCount: { color: '#fff', fontSize: 52, ...fontStyles.heading },
-  totalSync: { color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 4, ...fontStyles.body },
-  sectionTitle: { fontSize: 16, ...fontStyles.headingMedium },
+  totalLabel: { color: 'rgba(255,255,255,0.8)', fontSize: 14, ...fontStyles.bodyMedium },
+  totalCount: { color: '#fff', fontSize: 56, ...fontStyles.heading, letterSpacing: -2 },
+  totalSync: { color: 'rgba(255,255,255,0.7)', fontSize: 11, marginTop: 4, ...fontStyles.body },
+  sectionTitle: { fontSize: 17, ...fontStyles.headingMedium, marginBottom: -4 },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
   },
   statCard: {
-    width: '47%',
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 16,
-    gap: 8,
+    width: '47.5%',
+    borderRadius: 18,
+    padding: 18,
+    gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
   statIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  statIconText: { fontSize: 18 },
-  statCount: { fontSize: 32, ...fontStyles.heading },
+  statIconText: { fontSize: 20 },
+  statCount: { fontSize: 36, ...fontStyles.heading, letterSpacing: -1 },
   statLabel: { fontSize: 13, ...fontStyles.bodyMedium },
   createBtn: {
-    borderRadius: 14,
-    paddingVertical: 16,
+    borderRadius: 16,
+    paddingVertical: 18,
     alignItems: 'center',
-    marginTop: 4,
-    marginBottom: 20,
+    marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   createBtnText: { color: '#fff', fontSize: 16, ...fontStyles.headingMedium },
 });

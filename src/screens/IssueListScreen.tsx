@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -73,9 +74,22 @@ export const IssueListScreen: React.FC = () => {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: c.background }]}>
-      {/* Network Status Bar */}
-      <NetworkStatusBar />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: c.surface }]}>
+      <View style={[styles.container, { backgroundColor: c.background }]}>
+        {/* Custom Header */}
+        <View style={[styles.customHeader, { backgroundColor: c.surface }]}>
+          <Text style={[styles.headerTitle, { color: c.text }]}>Issues</Text>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('CreateEditIssue', {})}
+            style={[styles.addButton, { backgroundColor: c.primary }]}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.addButtonText}>+ New</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Network Status Bar */}
+        <NetworkStatusBar />
 
       {/* Search bar */}
       <View style={styles.searchRow}>
@@ -220,11 +234,46 @@ export const IssueListScreen: React.FC = () => {
         <Text style={styles.fabIcon}>+</Text>
       </TouchableOpacity>
     </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: { flex: 1 },
   container: { flex: 1 },
+  customHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  headerTitle: {
+    fontSize: 28,
+    ...fontStyles.heading,
+    letterSpacing: -0.5,
+  },
+  addButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    ...fontStyles.headingMedium,
+  },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24 },
   loadingText: { fontSize: 14, marginTop: 8, ...fontStyles.body },
   errorIcon: { fontSize: 48 },
@@ -232,17 +281,17 @@ const styles = StyleSheet.create({
   errorMsg: { fontSize: 14, textAlign: 'center', ...fontStyles.body },
   retryBtn: { paddingHorizontal: 24, paddingVertical: 12, borderRadius: 10, marginTop: 8 },
   retryText: { color: '#fff', ...fontStyles.headingMedium },
-  searchRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
+  searchRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   searchInput: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 14,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 12,
     fontSize: 15,
     ...fontStyles.body,
   },
-  clearBtn: { borderRadius: 10, paddingHorizontal: 12, justifyContent: 'center' },
+  clearBtn: { borderRadius: 12, paddingHorizontal: 12, justifyContent: 'center' },
   clearBtnText: { fontSize: 13, ...fontStyles.bodyMedium },
   chipScroll: { paddingBottom: 4 },
   chipContainer: { paddingHorizontal: 16, gap: 8 },
