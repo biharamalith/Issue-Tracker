@@ -1,0 +1,250 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  Share,
+} from 'react-native';
+import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useIssueStore } from '../store/issueStore';
+import { useTheme } from '../hooks/useTheme';
+import { StatusBadge } from '../components/StatusBadge';
+import { PriorityBadge } from '../components/PriorityBadge';
+import { RootStackParamList } from '../types';
+import { formatDate } from '../utils/formatDate';
+import { fontStyles } from '../utils/fonts';
+
+type RouteProps = RouteProp<RootStackParamList, 'IssueDetail'>;
+type Nav = NativeStackNavigationProp<RootStackParamList>;
+
+const InfoRow: React.FC<{ label: string; value: string }> = ({ label, value }) => {
+  const { theme } = useTheme();
+  const c = theme.colors;
+  return (
+    <View style={[styles.infoRow, { borderBottomColor: c.divider }]}>
+      <Text style={[styles.infoLabel, { color: c.textMuted }]}>{label}</Text>
+      <Text style={[styles.infoValue, { color: c.text }]}>{value}</Text>
+    </View>
+  );
+};
+
+export const IssueDetailScreen: React.FC = () => {
+  const { theme } = useTheme();
+  const c = theme.colors;
+  const route = useRoute<RouteProps>();
+  const navigation = useNavigation<Nav>();
+  const { issueId } = route.params;
+
+  const getIssueById = useIssueStore(s => s.getIssueById);
+  const resolveIssue = useIssueStore(s => s.resolveIssue);
+  const closeIssue = useIssueStore(s => s.closeIssue);
+  const deleteIssue = useIssueStore(s => s.deleteIssue);
+  const exportToJSON = useIssueStore(s => s.exportToJSON);
+
+  const issue = getIssueById(issueId);
+
+  if (!issue) {
+    return (
+      <View style={[styles.center, { backgroundColor: c.background }]}>
+        <Text style={styles.notFoundIcon}>🚫</Text>
+        <Text style={[styles.notFoundText, { color: c.text }]}>Issue not found</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Text style={{ color: c.primary }}>Go back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const handleResolve = () => {
+    Alert.alert(
+      'Mark as Resolved',
+      'Are you sure you want to mark this issue as resolved?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Resolve',
+          style: 'default',
+          onPress: async () => {
+            await resolveIssue(issue.id);
+            Alert.alert('Done', 'Issue marked as resolved.');
+          },
+        },
+      ],
+    );
+  };
+
+  const handleClose = () => {
+    Alert.alert(
+      'Close Issue',
+      'This will mark the issue as closed. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Close Issue',
+          style: 'destructive',
+          onPress: async () => {
+            await closeIssue(issue.id);
+            Alert.alert('Done', 'Issue closed.');
+          },
+        },
+      ],
+    );
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Issue',
+      'This action cannot be undone. Are you sure?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteIssue(issue.id);
+            navigation.goBack();
+          },
+        },
+      ],
+    );
+  };
+
+  const handleShare = async () => {
+    await Share.share({
+      title: issue.title,
+      message: `Issue: ${issue.title}\nStatus: ${issue.status}\nPriority: ${issue.priority}\n\n${issue.description}`,
+    });
+  };
+
+  const canResolve = issue.status === 'open' || issue.status === 'in_progress';
+  const canClose = issue.status !== 'closed';
+
+  return (
+    <ScrollView
+      style={[styles.container, { backgroundColor: c.background }]}
+      contentContainerStyle={styles.content}
+    >
+      {/* Pending sync indicator */}
+      {issue.pendingSync && (
+        <View style={[styles.syncBanner, { backgroundColor: c.warning + '22', borderColor: c.warning }]}>
+          <Text style={[styles.syncBannerText, { color: c.warning }]}>
+            ⏳ This issue has unsaved changes pending sync
+          </Text>
+        </View>
+      )}
+
+      {/* Title card */}
+      <View style={[styles.card, { backgroundColor: c.surface, borderColor: c.border }]}>
+        <Text style={[styles.title, { color: c.text }]}>{issue.title}</Text>
+        <View style={styles.badges}>
+          <StatusBadge status={issue.status} />
+          <PriorityBadge priority={issue.priority} />
+        </View>
+      </View>
+
+      {/* Description */}
+      <View style={[styles.card, { backgroundColor: c.surface, borderColor: c.border }]}>
+        <Text style={[styles.sectionTitle, { color: c.textSecondary }]}>Description</Text>
+        <Text style={[styles.description, { color: c.text }]}>{issue.description}</Text>
+      </View>
+
+      {/* Metadata */}
+      <View style={[styles.card, { backgroundColor: c.surface, borderColor: c.border }]}>
+        <Text style={[styles.sectionTitle, { color: c.textSecondary }]}>Details</Text>
+        <InfoRow label="Assignee" value={issue.assignee ?? 'Unassigned'} />
+        <InfoRow label="Created" value={formatDate(issue.createdAt)} />
+        <InfoRow label="Updated" value={formatDate(issue.updatedAt)} />
+        <InfoRow label="ID" value={issue.id} />
+      </View>
+
+      {/* Actions */}
+      <View style={styles.actions}>
+        <TouchableOpacity
+          style={[styles.actionBtn, { backgroundColor: c.primary }]}
+          onPress={() => navigation.navigate('CreateEditIssue', { issueId: issue.id })}
+        >
+          <Text style={styles.actionBtnText}>✏️  Edit Issue</Text>
+        </TouchableOpacity>
+
+        {canResolve && (
+          <TouchableOpacity
+            style={[styles.actionBtn, { backgroundColor: c.success }]}
+            onPress={handleResolve}
+          >
+            <Text style={styles.actionBtnText}>✅  Mark Resolved</Text>
+          </TouchableOpacity>
+        )}
+
+        {canClose && (
+          <TouchableOpacity
+            style={[styles.actionBtn, { backgroundColor: c.statusClosed, borderColor: c.border }]}
+            onPress={handleClose}
+          >
+            <Text style={styles.actionBtnText}>🔒  Close Issue</Text>
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity
+          style={[styles.actionBtn, { backgroundColor: c.info }]}
+          onPress={handleShare}
+        >
+          <Text style={styles.actionBtnText}>📤  Share</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionBtn, styles.deleteBtn, { borderColor: c.error }]}
+          onPress={handleDelete}
+        >
+          <Text style={[styles.actionBtnText, { color: c.error }]}>🗑️  Delete Issue</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  content: { padding: 16, gap: 12, paddingBottom: 40 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  notFoundIcon: { fontSize: 48 },
+  notFoundText: { fontSize: 18, ...fontStyles.headingMedium },
+  syncBanner: {
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+  },
+  syncBannerText: { fontSize: 13, ...fontStyles.bodyMedium },
+  card: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 16,
+    gap: 12,
+  },
+  title: { fontSize: 20, lineHeight: 28, ...fontStyles.heading },
+  badges: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  sectionTitle: { fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5, ...fontStyles.bodyBold },
+  description: { fontSize: 15, lineHeight: 23, ...fontStyles.body },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+  },
+  infoLabel: { fontSize: 14, ...fontStyles.body },
+  infoValue: { fontSize: 14, ...fontStyles.bodyMedium },
+  actions: { gap: 10 },
+  actionBtn: {
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  actionBtnText: { color: '#fff', fontSize: 15, ...fontStyles.headingMedium },
+  deleteBtn: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+  },
+});
