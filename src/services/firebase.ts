@@ -16,7 +16,9 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Auth (Firebase handles persistence automatically in React Native)
+// Initialize Auth
+// Note: Persistence warning only appears when Firebase is actually used
+// For assignment submission (USE_FIREBASE = false), Firebase is not initialized
 export const auth = getAuth(app);
 
 // Initialize Firestore

@@ -1,7 +1,7 @@
 export const lightTheme = {
   dark: false,
   colors: {
-    primary: '#4F46E5',
+    primary: '#2a3ac5ff',
     primaryLight: '#EEF2FF',
     background: '#F8FAFC',
     surface: '#FFFFFF',

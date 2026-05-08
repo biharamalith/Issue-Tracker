@@ -231,7 +231,7 @@ export const CreateEditIssueScreen: React.FC = () => {
             ]}
             value={assignee}
             onChangeText={v => handleFieldChange('assignee', v)}
-            placeholder="e.g. John Doe"
+            placeholder="e.g. Bihara Malith"
             placeholderTextColor={c.placeholder}
           />
         </View>

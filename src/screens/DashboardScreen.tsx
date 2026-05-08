@@ -6,19 +6,27 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
-  SafeAreaView,
   Platform,
+  Image,
+  ImageBackground,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { CompositeNavigationProp } from '@react-navigation/native';
 import { useIssueStore } from '../store/issueStore';
 import { useAuthStore } from '../store/authStore';
 import { useTheme } from '../hooks/useTheme';
 import { NetworkStatusBar } from '../components/NetworkStatusBar';
-import { RootStackParamList, Status } from '../types';
+import { RootStackParamList, MainTabParamList, Status } from '../types';
 import { fontStyles } from '../utils/fonts';
 
-type Nav = NativeStackNavigationProp<RootStackParamList>;
+type Nav = CompositeNavigationProp<
+  BottomTabNavigationProp<MainTabParamList, 'Dashboard'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 // Constants for consistent sizing
 const SPACING = {
@@ -51,9 +59,9 @@ const StatCard: React.FC<{
   count: number;
   color: string;
   bg: string;
-  icon: string;
+  iconSource: any;
   onPress: () => void;
-}> = React.memo(({ label, count, color, bg, icon, onPress }) => {
+}> = React.memo(({ label, count, color, bg, iconSource, onPress }) => {
   const { theme } = useTheme();
   const c = theme.colors;
   
@@ -72,7 +80,11 @@ const StatCard: React.FC<{
     >
       <View style={styles.statCardHeader}>
         <View style={[styles.statIcon, { backgroundColor: bg }]}>
-          <Text style={styles.statIconText}>{icon}</Text>
+          <Image 
+            source={iconSource}
+            style={styles.statIconImage}
+            resizeMode="contain"
+          />
         </View>
         <Text style={[styles.statLabel, { color: c.textSecondary }]} numberOfLines={1}>
           {label}
@@ -106,7 +118,7 @@ export const DashboardScreen: React.FC = () => {
 
   const goToListWithFilter = useCallback((status: Status | 'all') => {
     useIssueStore.getState().setFilters({ status, search: '', priority: 'all' });
-    navigation.navigate('Main');
+    navigation.navigate('IssueList');
   }, [navigation]);
 
   const formattedSyncTime = useMemo(() => {
@@ -120,15 +132,18 @@ export const DashboardScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: c.surface }]}>
-      <ScrollView
-        style={[styles.container, { backgroundColor: c.background }]}
-        contentContainerStyle={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} tintColor={c.primary} />
-        }
-      >
-        {/* Network Status Bar */}
-        <NetworkStatusBar />
+      {isDark ? (
+        // Dark mode: Use solid background color
+        <View style={[styles.backgroundImage, { backgroundColor: c.background }]}>
+          <ScrollView
+            style={styles.container}
+            contentContainerStyle={styles.content}
+            refreshControl={
+              <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} tintColor={c.primary} />
+            }
+          >
+            {/* Network Status Bar */}
+            <NetworkStatusBar />
 
       {/* Header */}
       <View style={styles.header}>
@@ -166,23 +181,48 @@ export const DashboardScreen: React.FC = () => {
       </View>
 
       {/* Total */}
-      <View style={[styles.totalCard, { backgroundColor: c.primary }]}>
-        <Text style={styles.totalLabel}>Total Issues</Text>
-        <Text style={styles.totalCount}>{counts.total}</Text>
-        {formattedSyncTime && (
-          <Text style={styles.totalSync}>
-            Last synced {formattedSyncTime}
-          </Text>
-        )}
-      </View>
+      <LinearGradient
+        colors={[c.primary, c.primary, c.primary]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.totalCard}
+      >
+        {/* Decorative bubbles */}
+        <View style={styles.bubble1} />
+        <View style={styles.bubble2} />
+        <View style={styles.bubble3} />
+        
+        {/* Content */}
+        <View style={styles.totalContent}>
+          <Text style={styles.totalLabel}>TOTAL ISSUES</Text>
+          <Text style={styles.totalCount}>{counts.total}</Text>
+          {formattedSyncTime && (
+            <View style={styles.syncRow}>
+              <View style={styles.syncDot} />
+              <Text style={styles.totalSync}>
+                Last synced {formattedSyncTime}
+              </Text>
+            </View>
+          )}
+        </View>
+      </LinearGradient>
 
       {/* Stats grid */}
       <View style={styles.statsSection}>
         <View style={styles.statsSectionHeader}>
           <Text style={[styles.sectionTitle, { color: c.text }]}>By Status</Text>
-          <Text style={[styles.sectionSubtitle, { color: c.textMuted }]}>
-            {counts.total} total
-          </Text>
+          <TouchableOpacity 
+            onPress={() => {
+              // Navigate to IssueList tab and clear filters to show all
+              useIssueStore.getState().setFilters({ status: 'all', search: '', priority: 'all' });
+              navigation.navigate('IssueList');
+            }}
+            style={styles.viewAllBtn}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.viewAllText, { color: c.primary }]}>View all</Text>
+            <Text style={[styles.viewAllArrow, { color: c.primary }]}>→</Text>
+          </TouchableOpacity>
         </View>
         <View style={styles.statsGrid}>
           <StatCard
@@ -190,7 +230,7 @@ export const DashboardScreen: React.FC = () => {
             count={counts.open}
             color={c.statusOpen}
             bg={c.statusOpenBg}
-            icon="🔵"
+            iconSource={require('../../assets/open.png')}
             onPress={() => goToListWithFilter('open')}
           />
           <StatCard
@@ -198,7 +238,7 @@ export const DashboardScreen: React.FC = () => {
             count={counts.in_progress}
             color={c.statusInProgress}
             bg={c.statusInProgressBg}
-            icon="🟡"
+            iconSource={require('../../assets/In progress.png')}
             onPress={() => goToListWithFilter('in_progress')}
           />
           <StatCard
@@ -206,7 +246,7 @@ export const DashboardScreen: React.FC = () => {
             count={counts.resolved}
             color={c.statusResolved}
             bg={c.statusResolvedBg}
-            icon="🟢"
+            iconSource={require('../../assets/resolved.png')}
             onPress={() => goToListWithFilter('resolved')}
           />
           <StatCard
@@ -214,7 +254,7 @@ export const DashboardScreen: React.FC = () => {
             count={counts.closed}
             color={c.statusClosed}
             bg={c.statusClosedBg}
-            icon="⚫"
+            iconSource={require('../../assets/Closed.png')}
             onPress={() => goToListWithFilter('closed')}
           />
         </View>
@@ -230,7 +270,153 @@ export const DashboardScreen: React.FC = () => {
       >
         <Text style={styles.createBtnText}>+ Create New Issue</Text>
       </TouchableOpacity>
-      </ScrollView>
+          </ScrollView>
+        </View>
+      ) : (
+        // Light mode: Use background image
+        <ImageBackground
+          source={require('../../assets/homegb.jpg')}
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        >
+          <ScrollView
+            style={styles.container}
+            contentContainerStyle={styles.content}
+            refreshControl={
+              <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} tintColor={c.primary} />
+            }
+          >
+            {/* Network Status Bar */}
+            <NetworkStatusBar />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.userInfo}>
+          <View style={[styles.avatar, { backgroundColor: c.primary }]}>
+            <Text style={styles.avatarText}>{userInitial}</Text>
+          </View>
+          <View style={styles.userTextContainer}>
+            <Text style={[styles.greeting, { color: c.textMuted }]}>Good day 👋</Text>
+            <Text style={[styles.userName, { color: c.text }]} numberOfLines={1}>
+              {user?.name ?? 'User'}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.headerActions}>
+          <TouchableOpacity 
+            onPress={toggleTheme} 
+            style={[styles.iconBtn, { backgroundColor: c.surface }]}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+          >
+            <Text style={styles.iconBtnText}>{isDark ? '☀️' : '🌙'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={logout} 
+            style={[styles.logoutBtn, { backgroundColor: c.surface }]}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Logout"
+          >
+            <Text style={[styles.logoutText, { color: c.error }]}>Logout</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Total */}
+      <LinearGradient
+        colors={[c.primary, c.primary, c.primary]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.totalCard}
+      >
+        {/* Decorative bubbles */}
+        <View style={styles.bubble1} />
+        <View style={styles.bubble2} />
+        <View style={styles.bubble3} />
+        
+        {/* Content */}
+        <View style={styles.totalContent}>
+          <Text style={styles.totalLabel}>TOTAL ISSUES</Text>
+          <Text style={styles.totalCount}>{counts.total}</Text>
+          {formattedSyncTime && (
+            <View style={styles.syncRow}>
+              <View style={styles.syncDot} />
+              <Text style={styles.totalSync}>
+                Last synced {formattedSyncTime}
+              </Text>
+            </View>
+          )}
+        </View>
+      </LinearGradient>
+
+      {/* Stats grid */}
+      <View style={styles.statsSection}>
+        <View style={styles.statsSectionHeader}>
+          <Text style={[styles.sectionTitle, { color: c.text }]}>By Status</Text>
+          <TouchableOpacity 
+            onPress={() => {
+              // Navigate to IssueList tab and clear filters to show all
+              useIssueStore.getState().setFilters({ status: 'all', search: '', priority: 'all' });
+              navigation.navigate('IssueList');
+            }}
+            style={styles.viewAllBtn}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.viewAllText, { color: c.primary }]}>View all</Text>
+            <Text style={[styles.viewAllArrow, { color: c.primary }]}>→</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.statsGrid}>
+          <StatCard
+            label="Open"
+            count={counts.open}
+            color={c.statusOpen}
+            bg={c.statusOpenBg}
+            iconSource={require('../../assets/open.png')}
+            onPress={() => goToListWithFilter('open')}
+          />
+          <StatCard
+            label="In Progress"
+            count={counts.in_progress}
+            color={c.statusInProgress}
+            bg={c.statusInProgressBg}
+            iconSource={require('../../assets/In progress.png')}
+            onPress={() => goToListWithFilter('in_progress')}
+          />
+          <StatCard
+            label="Resolved"
+            count={counts.resolved}
+            color={c.statusResolved}
+            bg={c.statusResolvedBg}
+            iconSource={require('../../assets/resolved.png')}
+            onPress={() => goToListWithFilter('resolved')}
+          />
+          <StatCard
+            label="Closed"
+            count={counts.closed}
+            color={c.statusClosed}
+            bg={c.statusClosedBg}
+            iconSource={require('../../assets/Closed.png')}
+            onPress={() => goToListWithFilter('closed')}
+          />
+        </View>
+      </View>
+
+      {/* Quick action */}
+      <TouchableOpacity
+        style={[styles.createBtn, { backgroundColor: c.primary }]}
+        onPress={() => navigation.navigate('CreateEditIssue', {})}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel="Create new issue"
+      >
+        <Text style={styles.createBtnText}>+ Create New Issue</Text>
+      </TouchableOpacity>
+          </ScrollView>
+        </ImageBackground>
+      )}
     </SafeAreaView>
   );
 };
@@ -238,6 +424,11 @@ export const DashboardScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: { 
     flex: 1,
+  },
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
   },
   container: { 
     flex: 1,
@@ -332,8 +523,9 @@ const styles = StyleSheet.create({
   totalCard: {
     borderRadius: BORDER_RADIUS.xxlarge,
     padding: SPACING.xxl,
-    alignItems: 'center',
-    gap: SPACING.xs,
+    overflow: 'hidden',
+    position: 'relative',
+    minHeight: 160,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -346,9 +538,42 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  totalContent: {
+    alignItems: 'flex-start',
+    gap: SPACING.xs,
+    zIndex: 10,
+  },
+  bubble1: {
+    position: 'absolute',
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    top: -60,
+    right: -40,
+  },
+  bubble2: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    bottom: -40,
+    right: 100,
+  },
+  bubble3: {
+    position: 'absolute',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    top: 80,
+    right: 20,
+  },
   totalLabel: { 
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 14,
+    color: 'rgba(255,255,255,0.9)',
+    fontSize: 12,
+    letterSpacing: 1.5,
     ...fontStyles.bodyMedium,
   },
   totalCount: { 
@@ -357,10 +582,21 @@ const styles = StyleSheet.create({
     ...fontStyles.heading,
     letterSpacing: -2,
   },
-  totalSync: { 
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 11,
+  syncRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     marginTop: SPACING.xs,
+  },
+  syncDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4ADE80',
+  },
+  totalSync: { 
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 11,
     ...fontStyles.body,
   },
   statsSection: {
@@ -375,6 +611,19 @@ const styles = StyleSheet.create({
   sectionTitle: { 
     fontSize: 17,
     ...fontStyles.headingMedium,
+  },
+  viewAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  viewAllText: {
+    fontSize: 14,
+    ...fontStyles.bodyMedium,
+  },
+  viewAllArrow: {
+    fontSize: 16,
+    ...fontStyles.bodyMedium,
   },
   sectionSubtitle: { 
     fontSize: 13,
@@ -413,6 +662,10 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.small,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  statIconImage: {
+    width: 24,
+    height: 24,
   },
   statIconText: { 
     fontSize: ICON_SIZES.small,

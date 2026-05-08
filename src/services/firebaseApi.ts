@@ -135,25 +135,48 @@ export const firebaseApi = {
       const now = new Date().toISOString();
       
       // Convert image attachments to base64 for Firebase storage
-      const preparedAttachments = issue.attachments 
-        ? await prepareAttachmentsForFirebase(issue.attachments)
-        : [];
+      let plainAttachments: any[] = [];
       
-      const docRef = await addDoc(issuesRef, {
+      if (issue.attachments && issue.attachments.length > 0) {
+        try {
+          const preparedAttachments = await prepareAttachmentsForFirebase(issue.attachments);
+          // Convert to plain objects for Firestore
+          plainAttachments = preparedAttachments.map(att => ({
+            id: String(att.id),
+            uri: String(att.uri),
+            name: String(att.name),
+            type: String(att.type),
+            size: Number(att.size || 0),
+            addedAt: String(att.addedAt),
+          }));
+        } catch (error) {
+          console.error('[FirebaseAPI] Failed to prepare attachments, saving without images:', error);
+          plainAttachments = [];
+        }
+      }
+      
+      // Create clean data object with only the fields Firestore needs
+      const firestoreData = {
+        title: String(issue.title),
+        description: String(issue.description),
+        priority: String(issue.priority),
+        status: String(issue.status),
+        assignee: issue.assignee ? String(issue.assignee) : null,
+        attachments: plainAttachments,
+        createdAt: now,
+        updatedAt: now,
+      };
+      
+      const docRef = await addDoc(issuesRef, firestoreData);
+      
+      const newIssue: Issue = {
+        id: docRef.id,
         title: issue.title,
         description: issue.description,
         priority: issue.priority,
         status: issue.status,
-        assignee: issue.assignee || null,
-        attachments: preparedAttachments,
-        createdAt: now,
-        updatedAt: now,
-      });
-      
-      const newIssue: Issue = {
-        ...issue,
-        id: docRef.id,
-        attachments: preparedAttachments,
+        assignee: issue.assignee,
+        attachments: issue.attachments,
         createdAt: now,
         updatedAt: now,
       };
@@ -173,25 +196,38 @@ export const firebaseApi = {
       const now = new Date().toISOString();
       
       // Convert image attachments to base64 if present
-      const preparedAttachments = updates.attachments 
-        ? await prepareAttachmentsForFirebase(updates.attachments)
-        : undefined;
+      let plainAttachments: any[] | undefined = undefined;
       
+      if (updates.attachments) {
+        try {
+          const preparedAttachments = await prepareAttachmentsForFirebase(updates.attachments);
+          // Convert to plain objects for Firestore
+          plainAttachments = preparedAttachments.map(att => ({
+            id: String(att.id),
+            uri: String(att.uri),
+            name: String(att.name),
+            type: String(att.type),
+            size: Number(att.size || 0),
+            addedAt: String(att.addedAt),
+          }));
+        } catch (error) {
+          console.error('[FirebaseAPI] Failed to prepare attachments, keeping existing:', error);
+          plainAttachments = undefined;
+        }
+      }
+      
+      // Create clean update data
       const updateData: any = {
-        ...updates,
         updatedAt: now,
       };
       
-      // Add prepared attachments if they exist
-      if (preparedAttachments !== undefined) {
-        updateData.attachments = preparedAttachments;
-      }
-      
-      // Remove fields that shouldn't be updated
-      delete updateData.id;
-      delete updateData.createdAt;
-      delete updateData.isLocalOnly;
-      delete updateData.pendingSync;
+      // Only add fields that are being updated
+      if (updates.title !== undefined) updateData.title = String(updates.title);
+      if (updates.description !== undefined) updateData.description = String(updates.description);
+      if (updates.priority !== undefined) updateData.priority = String(updates.priority);
+      if (updates.status !== undefined) updateData.status = String(updates.status);
+      if (updates.assignee !== undefined) updateData.assignee = updates.assignee ? String(updates.assignee) : null;
+      if (plainAttachments !== undefined) updateData.attachments = plainAttachments;
       
       await updateDoc(issueRef, updateData);
       

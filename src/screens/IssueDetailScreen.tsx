@@ -45,6 +45,7 @@ export const IssueDetailScreen: React.FC = () => {
   const { issueId } = route.params;
 
   const getIssueById = useIssueStore(s => s.getIssueById);
+  const markInProgress = useIssueStore(s => s.markInProgress);
   const resolveIssue = useIssueStore(s => s.resolveIssue);
   const closeIssue = useIssueStore(s => s.closeIssue);
   const deleteIssue = useIssueStore(s => s.deleteIssue);
@@ -65,6 +66,24 @@ export const IssueDetailScreen: React.FC = () => {
       </View>
     );
   }
+
+  const handleInProgress = () => {
+    Alert.alert(
+      'Mark as In Progress',
+      'Are you sure you want to mark this issue as in progress?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Mark In Progress',
+          style: 'default',
+          onPress: async () => {
+            await markInProgress(issue.id);
+            Alert.alert('Done', 'Issue marked as in progress.');
+          },
+        },
+      ],
+    );
+  };
 
   const handleResolve = () => {
     Alert.alert(
@@ -127,6 +146,7 @@ export const IssueDetailScreen: React.FC = () => {
     });
   };
 
+  const canMarkInProgress = issue.status === 'open';
   const canResolve = issue.status === 'open' || issue.status === 'in_progress';
   const canClose = issue.status !== 'closed';
 
@@ -197,6 +217,15 @@ export const IssueDetailScreen: React.FC = () => {
         >
           <Text style={styles.actionBtnText}>✏️  Edit Issue</Text>
         </TouchableOpacity>
+
+        {canMarkInProgress && (
+          <TouchableOpacity
+            style={[styles.actionBtn, { backgroundColor: c.statusInProgress }]}
+            onPress={handleInProgress}
+          >
+            <Text style={styles.actionBtnText}>⏳  Mark In Progress</Text>
+          </TouchableOpacity>
+        )}
 
         {canResolve && (
           <TouchableOpacity

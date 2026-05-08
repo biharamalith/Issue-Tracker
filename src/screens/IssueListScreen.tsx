@@ -8,8 +8,9 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
-  SafeAreaView,
+  ImageBackground,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useIssueStore } from '../store/issueStore';
@@ -28,7 +29,7 @@ const capitalize = (s: string) =>
   s === 'all' ? 'All' : s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
 export const IssueListScreen: React.FC = () => {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const c = theme.colors;
   const navigation = useNavigation<Nav>();
 
@@ -75,21 +76,24 @@ export const IssueListScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: c.surface }]}>
-      <View style={[styles.container, { backgroundColor: c.background }]}>
-        {/* Custom Header */}
-        <View style={[styles.customHeader, { backgroundColor: c.surface }]}>
-          <Text style={[styles.headerTitle, { color: c.text }]}>Issues</Text>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('CreateEditIssue', {})}
-            style={[styles.addButton, { backgroundColor: c.primary }]}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.addButtonText}>+ New</Text>
-          </TouchableOpacity>
-        </View>
+      {isDark ? (
+        // Dark mode: Use solid background color
+        <View style={[styles.backgroundImage, { backgroundColor: c.background }]}>
+          <View style={styles.container}>
+            {/* Custom Header */}
+            <View style={[styles.customHeader, { backgroundColor: c.surface }]}>
+              <Text style={[styles.headerTitle, { color: c.text }]}>Issues</Text>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('CreateEditIssue', {})}
+                style={[styles.addButton, { backgroundColor: c.primary }]}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.addButtonText}>+ New</Text>
+              </TouchableOpacity>
+            </View>
 
-        {/* Network Status Bar */}
-        <NetworkStatusBar />
+            {/* Network Status Bar */}
+            <NetworkStatusBar />
 
       {/* Search bar */}
       <View style={styles.searchRow}>
@@ -233,13 +237,187 @@ export const IssueListScreen: React.FC = () => {
       >
         <Text style={styles.fabIcon}>+</Text>
       </TouchableOpacity>
-    </View>
+          </View>
+        </View>
+      ) : (
+        // Light mode: Use background image
+        <ImageBackground
+          source={require('../../assets/homegb.jpg')}
+          style={styles.backgroundImage}
+          resizeMode="cover"
+        >
+          <View style={styles.container}>
+            {/* Custom Header */}
+            <View style={[styles.customHeader, { backgroundColor: c.surface }]}>
+              <Text style={[styles.headerTitle, { color: c.text }]}>Issues</Text>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('CreateEditIssue', {})}
+                style={[styles.addButton, { backgroundColor: c.primary }]}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.addButtonText}>+ New</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Network Status Bar */}
+            <NetworkStatusBar />
+
+      {/* Search bar */}
+      <View style={styles.searchRow}>
+        <TextInput
+          style={[
+            styles.searchInput, 
+            { 
+              backgroundColor: c.surface, 
+              borderColor: c.border, 
+              color: c.text,
+              fontFamily: 'Satoshi-Regular',
+            }
+          ]}
+          placeholder="Search issues..."
+          placeholderTextColor={c.placeholder}
+          value={filters.search}
+          onChangeText={v => setFilters({ search: v })}
+          clearButtonMode="while-editing"
+        />
+        {hasActiveFilters && (
+          <TouchableOpacity
+            style={[styles.clearBtn, { backgroundColor: c.error + '22' }]}
+            onPress={clearFilters}
+          >
+            <Text style={[styles.clearBtnText, { color: c.error }]}>Clear</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Status filter chips */}
+      <View style={styles.chipScroll}>
+        <FlatList
+          horizontal
+          data={STATUS_OPTIONS}
+          keyExtractor={i => i}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipContainer}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: filters.status === item ? c.primary : c.surface,
+                  borderColor: filters.status === item ? c.primary : c.border,
+                },
+              ]}
+              onPress={() => setFilters({ status: item })}
+            >
+              <Text
+                style={[
+                  styles.chipText,
+                  { color: filters.status === item ? '#fff' : c.textSecondary },
+                ]}
+              >
+                {capitalize(item)}
+              </Text>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+
+      {/* Priority filter chips */}
+      <View style={styles.chipScroll}>
+        <FlatList
+          horizontal
+          data={PRIORITY_OPTIONS}
+          keyExtractor={i => i}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipContainer}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={[
+                styles.chip,
+                {
+                  backgroundColor: filters.priority === item ? c.primary : c.surface,
+                  borderColor: filters.priority === item ? c.primary : c.border,
+                },
+              ]}
+              onPress={() => setFilters({ priority: item as any })}
+            >
+              <Text
+                style={[
+                  styles.chipText,
+                  { color: filters.priority === item ? '#fff' : c.textSecondary },
+                ]}
+              >
+                {capitalize(item)}
+              </Text>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
+
+      {/* Result count */}
+      <Text style={[styles.resultCount, { color: c.textMuted }]}>
+        {filteredIssues.length} issue{filteredIssues.length !== 1 ? 's' : ''}
+        {hasActiveFilters ? ' (filtered)' : ''}
+      </Text>
+
+      {/* List */}
+      <FlatList
+        data={filteredIssues}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={handleRefresh} tintColor={c.primary} />
+        }
+        renderItem={({ item }) => (
+          <IssueCard
+            issue={item}
+            onPress={() => navigation.navigate('IssueDetail', { issueId: item.id })}
+          />
+        )}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>🔍</Text>
+            <Text style={[styles.emptyTitle, { color: c.text }]}>No issues found</Text>
+            <Text style={[styles.emptyMsg, { color: c.textSecondary }]}>
+              {hasActiveFilters
+                ? 'Try adjusting your filters'
+                : 'Create your first issue to get started'}
+            </Text>
+            {!hasActiveFilters && (
+              <TouchableOpacity
+                style={[styles.createBtn, { backgroundColor: c.primary }]}
+                onPress={() => navigation.navigate('CreateEditIssue', {})}
+              >
+                <Text style={styles.createBtnText}>+ Create Issue</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        }
+      />
+
+      {/* FAB */}
+      <TouchableOpacity
+        style={[styles.fab, { backgroundColor: c.primary }]}
+        onPress={() => navigation.navigate('CreateEditIssue', {})}
+        activeOpacity={0.85}
+      >
+        <Text style={styles.fabIcon}>+</Text>
+      </TouchableOpacity>
+          </View>
+        </ImageBackground>
+      )}
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
+  backgroundImage: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
   container: { flex: 1 },
   customHeader: {
     flexDirection: 'row',
@@ -313,7 +491,7 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     right: 20,
-    bottom: 24,
+    bottom: 90,  // Moved up to avoid bottom navbar (was 24)
     width: 56,
     height: 56,
     borderRadius: 28,
@@ -325,5 +503,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
   },
-  fabIcon: { fontSize: 28, color: '#fff', lineHeight: 30, ...fontStyles.heading },
+  fabIcon: { 
+    fontSize: 28, 
+    color: '#fff', 
+    fontWeight: 'bold',
+    textAlign: 'center',
+    includeFontPadding: false,
+    marginTop: -2,  // Fine-tune vertical centering
+  },
 });

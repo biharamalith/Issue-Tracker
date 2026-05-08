@@ -1,10 +1,9 @@
 import { Issue, Priority, Status } from '../types';
-import { firebaseApi } from './firebaseApi';
 
 // Toggle between mock and Firebase API
-// Set to false for assignment submission (uses mock API as required)
-// Set to true to enable Firebase backend (optional bonus feature)
-const USE_FIREBASE = true;  // ← Change to true for Firebase
+// Set to false = uses mock API 
+// Set to true = enable Firebase backend
+export const USE_FIREBASE = false;  // ← Change to true for Firebase
 
 const MOCK_DELAY = 800;
 
@@ -157,7 +156,18 @@ const mockApi = {
 };
 
 // Export the appropriate API based on configuration
-export const api = USE_FIREBASE ? firebaseApi : mockApi;
+// Conditionally import firebaseApi only when needed to avoid initialization warnings
+let api: typeof mockApi;
+
+if (USE_FIREBASE) {
+  // Dynamic import to avoid loading Firebase when not needed
+  const { firebaseApi } = require('./firebaseApi');
+  api = firebaseApi;
+} else {
+  api = mockApi;
+}
+
+export { api };
 
 // Keep mockApi export for backward compatibility
 export { mockApi };

@@ -24,6 +24,7 @@ interface IssueState {
   retrySyncFailed: () => Promise<SyncResult>;
   createIssue: (data: Omit<Issue, 'id' | 'createdAt' | 'updatedAt' | 'isLocalOnly' | 'pendingSync'>) => Promise<Issue>;
   updateIssue: (id: string, data: Partial<Issue>) => Promise<void>;
+  markInProgress: (id: string) => Promise<void>;
   resolveIssue: (id: string) => Promise<void>;
   closeIssue: (id: string) => Promise<void>;
   deleteIssue: (id: string) => Promise<void>;
@@ -244,6 +245,10 @@ export const useIssueStore = create<IssueState>((set, get) => ({
 
     set({ issues: updatedIssues, syncQueue: updatedQueue });
     await persist(updatedIssues, updatedQueue);
+  },
+
+  markInProgress: async (id) => {
+    await get().updateIssue(id, { status: 'in_progress' });
   },
 
   resolveIssue: async (id) => {

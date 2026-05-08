@@ -9,11 +9,13 @@ import {
   Platform,
   ActivityIndicator,
   ScrollView,
+  Image,
 } from 'react-native';
 import { useAuthStore } from '../store/authStore';
 import { useTheme } from '../hooks/useTheme';
 import { validateEmail } from '../utils/formatDate';
 import { fontStyles } from '../utils/fonts';
+import { USE_FIREBASE } from '../services/api';
 
 export const LoginScreen: React.FC = () => {
   const { theme, isDark, toggleTheme } = useTheme();
@@ -70,9 +72,11 @@ export const LoginScreen: React.FC = () => {
 
         {/* Logo */}
         <View style={styles.logoContainer}>
-          <View style={[styles.logoBox, { backgroundColor: c.primary }]}>
-            <Text style={styles.logoIcon}>🐛</Text>
-          </View>
+          <Image 
+            source={require('../../assets/issue-removebg-preview.png')} 
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <Text style={[styles.appName, { color: c.text }]}>IssueTracker</Text>
           <Text style={[styles.tagline, { color: c.textSecondary }]}>
             Track bugs. Ship faster.
@@ -140,7 +144,14 @@ export const LoginScreen: React.FC = () => {
                 style={[styles.eyeBtn, { borderColor: c.border, backgroundColor: c.inputBackground }]}
                 onPress={() => setShowPassword(p => !p)}
               >
-                <Text style={{ fontSize: 18 }}>{showPassword ? '🙈' : '👁️'}</Text>
+                <Image 
+                  source={showPassword 
+                    ? require('../../assets/eyeclose.png') 
+                    : require('../../assets/eyeopen.png')
+                  }
+                  style={styles.eyeIcon}
+                  resizeMode="contain"
+                />
               </TouchableOpacity>
             </View>
             {errors.password && <Text style={[styles.fieldError, { color: c.error }]}>{errors.password}</Text>}
@@ -162,25 +173,30 @@ export const LoginScreen: React.FC = () => {
             )}
           </TouchableOpacity>
 
-          {/* Toggle Sign Up / Sign In */}
-          <TouchableOpacity 
-            onPress={() => {
-              setIsSignUp(!isSignUp);
-              setErrors({});
-            }}
-            style={styles.toggleContainer}
-          >
-            <Text style={[styles.toggleText, { color: c.textSecondary }]}>
-              {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
-              <Text style={[styles.toggleLink, { color: c.primary }]}>
-                {isSignUp ? 'Sign in' : 'Sign up'}
+          {/* Toggle Sign Up / Sign In - Only show if Firebase is enabled */}
+          {USE_FIREBASE && (
+            <TouchableOpacity 
+              onPress={() => {
+                setIsSignUp(!isSignUp);
+                setErrors({});
+              }}
+              style={styles.toggleContainer}
+            >
+              <Text style={[styles.toggleText, { color: c.textSecondary }]}>
+                {isSignUp ? 'Already have an account? ' : "Don't have an account? "}
+                <Text style={[styles.toggleLink, { color: c.primary }]}>
+                  {isSignUp ? 'Sign in' : 'Sign up'}
+                </Text>
               </Text>
-            </Text>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          )}
 
           {!isSignUp && (
             <Text style={[styles.hint, { color: c.textMuted }]}>
-              Demo: any valid email + 6+ char password
+              {USE_FIREBASE 
+                ? 'Use your registered email and password'
+                : 'Demo: any valid email + 6+ char password'
+              }
             </Text>
           )}
         </View>
@@ -206,12 +222,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
   },
-  logoBox: {
+  logoImage: {
     width: 72,
     height: 72,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginBottom: 12,
   },
   logoIcon: { fontSize: 36 },
@@ -249,6 +262,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  eyeIcon: {
+    width: 20,
+    height: 20,
   },
   fieldError: { fontSize: 12, ...fontStyles.bodyMedium },
   loginBtn: {

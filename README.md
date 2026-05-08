@@ -9,26 +9,30 @@ A production-ready React Native mobile application for tracking and managing iss
 ### Core Functionality ✅
 - ✅ **Authentication**: Email/password validation with mock login OR Firebase authentication
 - ✅ **Issue Management**: Create, view, edit, delete, and resolve issues
-- ✅ **Dashboard**: Real-time status counts (Open, In Progress, Resolved, Closed) with visual progress bars
+- ✅ **Dashboard**: Real-time status counts (Open, In Progress, Resolved, Closed) with visual progress bars and gradient design
 - ✅ **Advanced Filtering**: Search by title/description, filter by status and priority
 - ✅ **Offline-First**: Full offline support with local persistence and intelligent sync queue
 - ✅ **Pull-to-Refresh**: Manual refresh from API with loading states
-- ✅ **Dark Mode**: Complete theme system with light/dark mode toggle
+- ✅ **Dark Mode**: Complete theme system with light/dark mode toggle and adaptive backgrounds
 - ✅ **Image Attachments**: Gallery picker, camera support, full-screen viewer (up to 3 images per issue)
+- ✅ **Animated Splash Screen**: Professional splash screen with logo animation and loading bar
+- ✅ **Theme-Aware Backgrounds**: Beautiful background images in light mode, clean dark backgrounds in dark mode
 
 ### Bonus Features ✅
 - ✅ **Firebase Backend**: Optional real-time database with Firestore and Authentication
 - ✅ **Image Storage**: Base64 encoding for Firebase, local file URIs for mock API
 - ✅ **Export**: Export issues to JSON or CSV format
 - ✅ **State Management**: Zustand for clean, performant state handling
-- ✅ **Reusable Components**: Modular UI components (IssueCard, StatusBadge, PriorityBadge, ImagePicker)
+- ✅ **Reusable Components**: Modular UI components (IssueCard, StatusBadge, PriorityBadge, ImagePicker, NetworkStatusBar)
 - ✅ **Tests**: Unit tests for validation, store logic, and sync service
 - ✅ **Loading States**: Proper loading, empty, and error state handling
 - ✅ **Network Detection**: Real-time online/offline status with NetInfo
 - ✅ **Auto-Sync**: Automatic sync when network is restored
 - ✅ **Retry Logic**: Manual retry for failed sync operations
 - ✅ **Conflict Resolution**: Configurable strategies (local, server, merge)
-- ✅ **Professional UI**: iOS-style rounded design with custom icons and animations
+- ✅ **Professional UI**: iOS-style rounded design with custom icons, images, and smooth animations
+- ✅ **Custom Splash Screen**: Animated splash screen with gradient background and logo
+- ✅ **Adaptive Backgrounds**: Background images that adapt to light/dark theme
 
 ---
 
@@ -195,8 +199,9 @@ When Firebase is enabled:
 4. Tap **"Save Changes"**
 
 ### Managing Issues
-- **Mark as Resolved**: Tap **"✅ Mark Resolved"** button
-- **Close Issue**: Tap **"🔒 Close Issue"** button
+- **Mark as In Progress**: Tap **"⏳ Mark In Progress"** button (available for Open issues)
+- **Mark as Resolved**: Tap **"✅ Mark Resolved"** button (available for Open and In Progress issues)
+- **Close Issue**: Tap **"🔒 Close Issue"** button (available for all non-closed issues)
 - **Share**: Tap **"📤 Share"** to share issue details
 - **Delete**: Tap **"🗑️ Delete Issue"** (confirmation required)
 
@@ -213,6 +218,7 @@ When Firebase is enabled:
 - Toggle dark mode from login screen or dashboard
 - Preference saved automatically
 - Smooth theme transitions
+- **Adaptive Backgrounds**: Background images display in light mode, solid colors in dark mode for perfect theme consistency
 
 ---
 
@@ -234,9 +240,10 @@ issuetracker/
 │   │   └── index.tsx               # Stack + Tab navigation
 │   ├── screens/             # Screen components
 │   │   ├── LoginScreen.tsx         # Authentication
-│   │   ├── DashboardScreen.tsx     # Status overview
+│   │   ├── SplashScreen.tsx        # Animated splash screen
+│   │   ├── DashboardScreen.tsx     # Status overview with gradient card
 │   │   ├── IssueListScreen.tsx     # Issue list with filters
-│   │   ├── IssueDetailScreen.tsx   # Issue details
+│   │   ├── IssueDetailScreen.tsx   # Issue details with actions
 │   │   └── CreateEditIssueScreen.tsx # Create/edit form
 │   ├── services/            # External services
 │   │   ├── api.ts                  # Unified API (mock/Firebase toggle)
@@ -263,6 +270,9 @@ issuetracker/
 │   ├── fonts/                      # Custom fonts (Satoshi, Space Grotesk)
 │   ├── dashboard.png               # Dashboard icon
 │   ├── issues.png                  # Issues icon
+│   ├── homegb.jpg                  # Background image
+│   ├── issue-removebg-preview.png  # App logo
+│   ├── open.png, closed.png, etc.  # Status icons
 │   └── ...
 ├── App.tsx                  # Root component
 ├── index.ts                 # Entry point
@@ -416,7 +426,12 @@ npx jest
 - ✅ Manual sync with retry
 - ✅ Conflict resolution
 - ✅ Professional UI design
-- ✅ Custom fonts
+- ✅ Custom fonts (Satoshi + Space Grotesk)
+- ✅ Custom icons and images throughout
+- ✅ **Animated splash screen with logo**
+- ✅ **Theme-aware background images**
+- ✅ **Gradient dashboard card with decorative bubbles**
+- ✅ **Mark In Progress button for workflow management**
 - ✅ Pull-to-refresh
 - ✅ Loading states
 - ✅ Error handling
@@ -463,9 +478,11 @@ npx jest
 4. **Test Features:**
    - Create issues with images
    - Filter and search
-   - Toggle dark mode
+   - Toggle dark mode (notice background changes)
    - Test offline mode (airplane mode)
    - View full-screen images
+   - Mark issues as In Progress
+   - View animated splash screen (restart app)
 
 ### Firebase Testing (Optional)
 
@@ -634,12 +651,14 @@ npx expo install expo-image-picker expo-file-system
 2. **Dual Backend**: Seamless toggle between mock API and Firebase
 3. **Image Support**: Full attachment system with compression and viewer
 4. **Offline-First**: Intelligent sync with conflict resolution
-5. **Professional UI**: iOS-style design with custom fonts and icons
-6. **Type-Safe**: Full TypeScript coverage
-7. **Tested**: Unit tests for critical functionality
-8. **Documented**: Comprehensive documentation and guides
-9. **Accessible**: Proper accessibility labels and hints
-10. **Performant**: Optimized with React.memo, useCallback, useMemo
+5. **Professional UI**: iOS-style design with custom fonts, icons, and images
+6. **Animated Splash**: Beautiful splash screen with gradient and animations
+7. **Adaptive Themes**: Background images that adapt to light/dark mode
+8. **Type-Safe**: Full TypeScript coverage
+9. **Tested**: Unit tests for critical functionality
+10. **Documented**: Comprehensive documentation and guides
+11. **Accessible**: Proper accessibility labels and hints
+12. **Performant**: Optimized with React.memo, useCallback, useMemo
 
 ### Technical Excellence
 
