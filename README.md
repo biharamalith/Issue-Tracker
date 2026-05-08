@@ -449,8 +449,6 @@ npx jest
 2. **Documentation**:
    - README.md (this file)
    - FIREBASE_SETUP.md (Firebase setup guide)
-   - FIREBASE_IMAGE_STORAGE.md (Image storage implementation)
-   - TECHNICAL_ASSESSMENT.md (Self-assessment)
    - Multiple implementation guides
 3. **Tests**: Unit tests for core functionality
 4. **Assets**: Custom fonts, icons, images
@@ -509,13 +507,6 @@ eas build --platform android --profile preview
 ```bash
 eas build --platform ios --profile preview
 ```
-
-**For Emulator Video:**
-- Record screen while using the app
-- Show all major features
-- Demonstrate offline mode
-- Show image attachments
-
 ### Key Configuration
 
 **Default Configuration (Assignment Submission):**
@@ -608,9 +599,6 @@ This project is for educational/assignment purposes.
 ### Documentation Files
 - **README.md**: This file (overview and setup)
 - **FIREBASE_SETUP.md**: Detailed Firebase setup guide
-- **FIREBASE_IMAGE_STORAGE.md**: Image storage implementation details
-- **TECHNICAL_ASSESSMENT.md**: Self-assessment and feature checklist
-- **QUICK_START.md**: Quick start guide for developers
 
 ### Troubleshooting
 
@@ -675,5 +663,4 @@ npx expo install expo-image-picker expo-file-system
 
 **Built with ❤️ using React Native + Expo + Firebase**
 
- 
- 
+

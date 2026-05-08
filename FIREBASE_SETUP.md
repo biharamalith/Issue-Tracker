@@ -10,7 +10,7 @@
 
 ---
 
-## Step 2: Register Your App
+## Step 2: Register the App
 
 1. In Firebase Console, click the **Web icon** (</>) to add a web app
 2. Enter app nickname: `IssueTracker App`
@@ -90,47 +90,6 @@ const firebaseConfig = {
 
 ---
 
-## Step 6: Test Your Setup
-
-### Create a Test User
-
-1. In Firebase Console, go to **"Authentication" → "Users"**
-2. Click **"Add user"**
-3. Enter:
-   - Email: `test@issuetracker.io`
-   - Password: `test1234`
-4. Click **"Add user"**
-
-### Test in Your App
-
-1. Start your app: `npm start`
-2. Try logging in with:
-   - Email: `test@issuetracker.io`
-   - Password: `test1234`
-3. If successful, you'll see the dashboard!
-
----
-
-## Step 7: Seed Initial Data (Optional)
-
-You can add some test issues directly in Firestore:
-
-1. Go to **"Firestore Database" → "Data"**
-2. Click **"Start collection"**
-3. Collection ID: `issues`
-4. Add a document with these fields:
-
-```
-title: "Test Issue"
-description: "This is a test issue from Firebase"
-priority: "high"
-status: "open"
-assignee: "Test User"
-createdAt: "2026-05-05T10:00:00.000Z"
-updatedAt: "2026-05-05T10:00:00.000Z"
-```
-
----
 
 ## Toggle Between Mock and Firebase
 
@@ -143,60 +102,6 @@ const USE_FIREBASE = true;
 
 ---
 
-## Troubleshooting
-
-### "Firebase: Error (auth/invalid-api-key)"
-- Check that your `apiKey` in `firebase.ts` is correct
-- Make sure you copied the entire key from Firebase Console
-
-### "Missing or insufficient permissions"
-- Check Firestore rules allow authenticated users
-- Make sure you're logged in before accessing data
-
-### "Network request failed"
-- Check your internet connection
-- Make sure Firebase project is active
-- Verify all Firebase services are enabled
-
-### "User not found" or "Wrong password"
-- Create a test user in Firebase Console first
-- Or use the app to register a new user
-
----
-
-## Security Notes
-
-### For Production:
-
-1. **Update Firestore Rules:**
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /issues/{issueId} {
-      // Only authenticated users can read
-      allow read: if request.auth != null;
-      
-      // Only authenticated users can create
-      allow create: if request.auth != null;
-      
-      // Only the creator can update/delete (add userId field to issues)
-      allow update, delete: if request.auth != null 
-        && request.auth.uid == resource.data.userId;
-    }
-  }
-}
-```
-
-2. **Add Environment Variables:**
-   - Don't commit Firebase config to public repos
-   - Use `.env` file with `react-native-dotenv`
-
-3. **Enable App Check:**
-   - Protects against abuse
-   - Available in Firebase Console
-
----
 
 ## What's Implemented
 
@@ -218,17 +123,3 @@ service cloud.firestore {
 - Auto-sync when online
 
 ---
-
-## Next Steps
-
-1. Complete Firebase setup (Steps 1-5)
-2. Test login with Firebase user
-3. Create some issues
-4. Test offline sync
-5. Build APK for submission
-
----
-
-**Estimated Setup Time:** 15-20 minutes
-
-**Need Help?** Check [Firebase Documentation](https://firebase.google.com/docs)

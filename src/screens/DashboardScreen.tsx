@@ -261,6 +261,7 @@ export const DashboardScreen: React.FC = () => {
       </View>
 
       {/* Quick action */}
+      {/* Quick action */}
       <TouchableOpacity
         style={[styles.createBtn, { backgroundColor: c.primary }]}
         onPress={() => navigation.navigate('CreateEditIssue', {})}
@@ -578,7 +579,7 @@ const styles = StyleSheet.create({
   },
   totalCount: { 
     color: '#fff',
-    fontSize: 56,
+    fontSize: 42,
     ...fontStyles.heading,
     letterSpacing: -2,
   },
@@ -676,7 +677,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statCount: { 
-    fontSize: 32,
+    fontSize: 24,
     ...fontStyles.heading,
     letterSpacing: -1,
   },

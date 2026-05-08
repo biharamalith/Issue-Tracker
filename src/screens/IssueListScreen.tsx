@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   ImageBackground,
+  Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -17,6 +18,7 @@ import { useIssueStore } from '../store/issueStore';
 import { useTheme } from '../hooks/useTheme';
 import { IssueCard } from '../components/IssueCard';
 import { NetworkStatusBar } from '../components/NetworkStatusBar';
+import { CustomAlert } from '../components/CustomAlert';
 import { RootStackParamList, Status, Priority } from '../types';
 import { fontStyles } from '../utils/fonts';
 
@@ -32,6 +34,7 @@ export const IssueListScreen: React.FC = () => {
   const { theme, isDark } = useTheme();
   const c = theme.colors;
   const navigation = useNavigation<Nav>();
+  const [showExportAlert, setShowExportAlert] = useState(false);
 
   const {
     fetchFromApi,
@@ -41,6 +44,8 @@ export const IssueListScreen: React.FC = () => {
     setFilters,
     clearFilters,
     getFilteredIssues,
+    exportToJSON,
+    exportToCSV,
   } = useIssueStore();
 
   const filteredIssues = getFilteredIssues();
@@ -49,6 +54,34 @@ export const IssueListScreen: React.FC = () => {
   const handleRefresh = useCallback(() => {
     fetchFromApi();
   }, []);
+
+  const handleExport = useCallback(() => {
+    setShowExportAlert(true);
+  }, []);
+
+  const handleExportJSON = useCallback(async () => {
+    try {
+      const jsonData = exportToJSON();
+      await Share.share({
+        message: jsonData,
+        title: 'Export Issues (JSON)',
+      });
+    } catch (error) {
+      // Handle error silently
+    }
+  }, [exportToJSON]);
+
+  const handleExportCSV = useCallback(async () => {
+    try {
+      const csvData = exportToCSV();
+      await Share.share({
+        message: csvData,
+        title: 'Export Issues (CSV)',
+      });
+    } catch (error) {
+      // Handle error silently
+    }
+  }, [exportToCSV]);
 
   // Loading state
   if (isLoading && filteredIssues.length === 0) {
@@ -83,13 +116,22 @@ export const IssueListScreen: React.FC = () => {
             {/* Custom Header */}
             <View style={[styles.customHeader, { backgroundColor: c.surface }]}>
               <Text style={[styles.headerTitle, { color: c.text }]}>Issues</Text>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('CreateEditIssue', {})}
-                style={[styles.addButton, { backgroundColor: c.primary }]}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.addButtonText}>+ New</Text>
-              </TouchableOpacity>
+              <View style={styles.headerActions}>
+                <TouchableOpacity
+                  onPress={handleExport}
+                  style={[styles.exportButton, { backgroundColor: c.success }]}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.exportButtonText}>📤</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('CreateEditIssue', {})}
+                  style={[styles.addButton, { backgroundColor: c.primary }]}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.addButtonText}>+ New</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Network Status Bar */}
@@ -250,13 +292,22 @@ export const IssueListScreen: React.FC = () => {
             {/* Custom Header */}
             <View style={[styles.customHeader, { backgroundColor: c.surface }]}>
               <Text style={[styles.headerTitle, { color: c.text }]}>Issues</Text>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('CreateEditIssue', {})}
-                style={[styles.addButton, { backgroundColor: c.primary }]}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.addButtonText}>+ New</Text>
-              </TouchableOpacity>
+              <View style={styles.headerActions}>
+                <TouchableOpacity
+                  onPress={handleExport}
+                  style={[styles.exportButton, { backgroundColor: c.success }]}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.exportButtonText}>📤</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('CreateEditIssue', {})}
+                  style={[styles.addButton, { backgroundColor: c.primary }]}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.addButtonText}>+ New</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Network Status Bar */}
@@ -407,6 +458,35 @@ export const IssueListScreen: React.FC = () => {
           </View>
         </ImageBackground>
       )}
+
+      {/* Export Alert */}
+      <CustomAlert
+        visible={showExportAlert}
+        title="Export Issues"
+        message="Choose export format:"
+        buttons={[
+          {
+            text: 'Cancel',
+            style: 'cancel',
+            onPress: () => setShowExportAlert(false),
+          },
+          {
+            text: '📄 JSON',
+            onPress: () => {
+              setShowExportAlert(false);
+              handleExportJSON();
+            },
+          },
+          {
+            text: '📊 CSV',
+            onPress: () => {
+              setShowExportAlert(false);
+              handleExportCSV();
+            },
+          },
+        ]}
+        onDismiss={() => setShowExportAlert(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -436,6 +516,25 @@ const styles = StyleSheet.create({
     fontSize: 28,
     ...fontStyles.heading,
     letterSpacing: -0.5,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  exportButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  exportButtonText: {
+    fontSize: 18,
   },
   addButton: {
     paddingHorizontal: 16,

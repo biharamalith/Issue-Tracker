@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Share,
   Image,
   Modal,
@@ -17,6 +16,7 @@ import { useIssueStore } from '../store/issueStore';
 import { useTheme } from '../hooks/useTheme';
 import { StatusBadge } from '../components/StatusBadge';
 import { PriorityBadge } from '../components/PriorityBadge';
+import { CustomAlert } from '../components/CustomAlert';
 import { RootStackParamList } from '../types';
 import { formatDate } from '../utils/formatDate';
 import { fontStyles } from '../utils/fonts';
@@ -52,6 +52,10 @@ export const IssueDetailScreen: React.FC = () => {
   const exportToJSON = useIssueStore(s => s.exportToJSON);
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [showInProgressAlert, setShowInProgressAlert] = useState(false);
+  const [showResolveAlert, setShowResolveAlert] = useState(false);
+  const [showCloseAlert, setShowCloseAlert] = useState(false);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
 
   const issue = getIssueById(issueId);
 
@@ -68,75 +72,19 @@ export const IssueDetailScreen: React.FC = () => {
   }
 
   const handleInProgress = () => {
-    Alert.alert(
-      'Mark as In Progress',
-      'Are you sure you want to mark this issue as in progress?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Mark In Progress',
-          style: 'default',
-          onPress: async () => {
-            await markInProgress(issue.id);
-            Alert.alert('Done', 'Issue marked as in progress.');
-          },
-        },
-      ],
-    );
+    setShowInProgressAlert(true);
   };
 
   const handleResolve = () => {
-    Alert.alert(
-      'Mark as Resolved',
-      'Are you sure you want to mark this issue as resolved?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Resolve',
-          style: 'default',
-          onPress: async () => {
-            await resolveIssue(issue.id);
-            Alert.alert('Done', 'Issue marked as resolved.');
-          },
-        },
-      ],
-    );
+    setShowResolveAlert(true);
   };
 
   const handleClose = () => {
-    Alert.alert(
-      'Close Issue',
-      'This will mark the issue as closed. Continue?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Close Issue',
-          style: 'destructive',
-          onPress: async () => {
-            await closeIssue(issue.id);
-            Alert.alert('Done', 'Issue closed.');
-          },
-        },
-      ],
-    );
+    setShowCloseAlert(true);
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Issue',
-      'This action cannot be undone. Are you sure?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteIssue(issue.id);
-            navigation.goBack();
-          },
-        },
-      ],
-    );
+    setShowDeleteAlert(true);
   };
 
   const handleShare = async () => {
@@ -294,6 +242,78 @@ export const IssueDetailScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </Modal>
+
+      {/* Custom Alerts */}
+      <CustomAlert
+        visible={showInProgressAlert}
+        title="Mark as In Progress"
+        message="Are you sure you want to mark this issue as in progress?"
+        buttons={[
+          { text: 'Cancel', style: 'cancel', onPress: () => setShowInProgressAlert(false) },
+          {
+            text: 'Mark In Progress',
+            onPress: async () => {
+              setShowInProgressAlert(false);
+              await markInProgress(issue.id);
+            },
+          },
+        ]}
+        onDismiss={() => setShowInProgressAlert(false)}
+      />
+
+      <CustomAlert
+        visible={showResolveAlert}
+        title="Mark as Resolved"
+        message="Are you sure you want to mark this issue as resolved?"
+        buttons={[
+          { text: 'Cancel', style: 'cancel', onPress: () => setShowResolveAlert(false) },
+          {
+            text: 'Resolve',
+            onPress: async () => {
+              setShowResolveAlert(false);
+              await resolveIssue(issue.id);
+            },
+          },
+        ]}
+        onDismiss={() => setShowResolveAlert(false)}
+      />
+
+      <CustomAlert
+        visible={showCloseAlert}
+        title="Close Issue"
+        message="This will mark the issue as closed. Continue?"
+        buttons={[
+          { text: 'Cancel', style: 'cancel', onPress: () => setShowCloseAlert(false) },
+          {
+            text: 'Close Issue',
+            style: 'destructive',
+            onPress: async () => {
+              setShowCloseAlert(false);
+              await closeIssue(issue.id);
+            },
+          },
+        ]}
+        onDismiss={() => setShowCloseAlert(false)}
+      />
+
+      <CustomAlert
+        visible={showDeleteAlert}
+        title="Delete Issue"
+        message="This action cannot be undone. Are you sure?"
+        buttons={[
+          { text: 'Cancel', style: 'cancel', onPress: () => setShowDeleteAlert(false) },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              setShowDeleteAlert(false);
+              await deleteIssue(issue.id);
+              navigation.goBack();
+            },
+          },
+        ]}
+        onDismiss={() => setShowDeleteAlert(false)}
+      />
     </ScrollView>
   );
 };
