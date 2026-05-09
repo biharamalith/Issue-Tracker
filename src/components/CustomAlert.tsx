@@ -38,10 +38,11 @@ export const CustomAlert: React.FC<CustomAlertProps> = ({
   const c = theme.colors;
 
   const handleButtonPress = (button: AlertButton) => {
+    // Only call onDismiss if button doesn't have its own onPress
+    // or if it's a cancel button
     if (button.onPress) {
       button.onPress();
-    }
-    if (onDismiss) {
+    } else if (onDismiss) {
       onDismiss();
     }
   };

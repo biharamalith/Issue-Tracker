@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,11 @@ import {
   RefreshControl,
   ActivityIndicator,
   ImageBackground,
+  Alert,
   Share,
+  Platform,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -56,30 +59,93 @@ export const IssueListScreen: React.FC = () => {
   }, []);
 
   const handleExport = useCallback(() => {
+    console.log('[Export] Export button clicked, showing alert...');
     setShowExportAlert(true);
   }, []);
 
   const handleExportJSON = useCallback(async () => {
+    console.log('[Export] Starting JSON export...');
+    console.log('[Export] Platform:', Platform.OS);
     try {
       const jsonData = exportToJSON();
-      await Share.share({
-        message: jsonData,
-        title: 'Export Issues (JSON)',
-      });
-    } catch (error) {
-      // Handle error silently
+      console.log('[Export] JSON data generated, length:', jsonData.length);
+      
+      if (Platform.OS === 'ios') {
+        // iOS: Direct clipboard copy (Share API unreliable on iOS)
+        console.log('[Export] iOS detected, attempting clipboard copy...');
+        try {
+          await Clipboard.setStringAsync(jsonData);
+          console.log('[Export] Clipboard copy successful');
+          
+          Alert.alert(
+            '✅ Copied to Clipboard',
+            'JSON data has been copied to your clipboard.\n\nYou can now paste it into:\n• Notes app\n• Text editor\n• Email\n• Any other app',
+            [{ text: 'OK' }]
+          );
+        } catch (clipError: any) {
+          console.error('[Export] Clipboard error:', clipError);
+          Alert.alert('Export Failed', `Could not copy to clipboard: ${clipError.message}`);
+        }
+      } else {
+        // Android: Use Share API
+        console.log('[Export] Android detected, using Share API');
+        const result = await Share.share({
+          message: jsonData,
+          title: 'Export Issues (JSON)',
+        });
+        
+        if (result.action === Share.sharedAction) {
+          console.log('[Export] JSON shared successfully');
+        } else if (result.action === Share.dismissedAction) {
+          console.log('[Export] Share dismissed');
+        }
+      }
+    } catch (error: any) {
+      console.error('[Export] JSON error:', error);
+      Alert.alert('Export Failed', `Could not export issues: ${error.message}`);
     }
   }, [exportToJSON]);
 
   const handleExportCSV = useCallback(async () => {
+    console.log('[Export] Starting CSV export...');
+    console.log('[Export] Platform:', Platform.OS);
     try {
       const csvData = exportToCSV();
-      await Share.share({
-        message: csvData,
-        title: 'Export Issues (CSV)',
-      });
-    } catch (error) {
-      // Handle error silently
+      console.log('[Export] CSV data generated, length:', csvData.length);
+      
+      if (Platform.OS === 'ios') {
+        // iOS: Direct clipboard copy (Share API unreliable on iOS)
+        console.log('[Export] iOS detected, attempting clipboard copy...');
+        try {
+          await Clipboard.setStringAsync(csvData);
+          console.log('[Export] Clipboard copy successful');
+          
+          Alert.alert(
+            '✅ Copied to Clipboard',
+            'CSV data has been copied to your clipboard.\n\nYou can now paste it into:\n• Excel\n• Google Sheets\n• Numbers\n• Any spreadsheet app',
+            [{ text: 'OK' }]
+          );
+        } catch (clipError: any) {
+          console.error('[Export] Clipboard error:', clipError);
+          Alert.alert('Export Failed', `Could not copy to clipboard: ${clipError.message}`);
+        }
+      } else {
+        // Android: Use Share API
+        console.log('[Export] Android detected, using Share API');
+        const result = await Share.share({
+          message: csvData,
+          title: 'Export Issues (CSV)',
+        });
+        
+        if (result.action === Share.sharedAction) {
+          console.log('[Export] CSV shared successfully');
+        } else if (result.action === Share.dismissedAction) {
+          console.log('[Export] Share dismissed');
+        }
+      }
+    } catch (error: any) {
+      console.error('[Export] CSV error:', error);
+      Alert.alert('Export Failed', `Could not export issues: ${error.message}`);
     }
   }, [exportToCSV]);
 
@@ -468,24 +534,32 @@ export const IssueListScreen: React.FC = () => {
           {
             text: 'Cancel',
             style: 'cancel',
-            onPress: () => setShowExportAlert(false),
+            onPress: () => {
+              console.log('[Export] User cancelled export');
+              setShowExportAlert(false);
+            },
           },
           {
             text: '📄 JSON',
             onPress: () => {
+              console.log('[Export] User selected JSON format');
               setShowExportAlert(false);
-              handleExportJSON();
+              setTimeout(() => handleExportJSON(), 300);
             },
           },
           {
             text: '📊 CSV',
             onPress: () => {
+              console.log('[Export] User selected CSV format');
               setShowExportAlert(false);
-              handleExportCSV();
+              setTimeout(() => handleExportCSV(), 300);
             },
           },
         ]}
-        onDismiss={() => setShowExportAlert(false)}
+        onDismiss={() => {
+          console.log('[Export] Alert dismissed');
+          setShowExportAlert(false);
+        }}
       />
     </SafeAreaView>
   );

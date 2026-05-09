@@ -19,7 +19,8 @@ export const formatDate = (isoString: string): string => {
 };
 
 export const validateEmail = (email: string): boolean => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  // Requires: username@domain.extension (extension must be at least 3 chars like .com, .org, .net)
+  return /^[^\s@]+@[^\s@]+\.[a-zA-Z]{3,}$/.test(email.trim());
 };
 
 export const validateIssueForm = (data: {

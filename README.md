@@ -21,7 +21,7 @@ A production-ready React Native mobile application for tracking and managing iss
 ### Bonus Features ✅
 - ✅ **Firebase Backend**: Optional real-time database with Firestore and Authentication
 - ✅ **Image Storage**: Base64 encoding for Firebase, local file URIs for mock API
-- ✅ **Export**: Export issues to JSON or CSV format
+- ✅ **Export**: Export issues to JSON or CSV format via native share sheet
 - ✅ **State Management**: Zustand for clean, performant state handling
 - ✅ **Reusable Components**: Modular UI components (IssueCard, StatusBadge, PriorityBadge, ImagePicker, NetworkStatusBar)
 - ✅ **Tests**: Unit tests for validation, store logic, and sync service

@@ -302,11 +302,16 @@ export const useIssueStore = create<IssueState>((set, get) => ({
   getIssueById: (id) => get().issues.find(i => i.id === id),
 
   exportToJSON: () => {
-    return JSON.stringify(get().issues, null, 2);
+    const { issues } = get();
+    console.log('[Store] exportToJSON called, issues count:', issues.length);
+    const jsonString = JSON.stringify(issues, null, 2);
+    console.log('[Store] JSON string generated, length:', jsonString.length);
+    return jsonString;
   },
 
   exportToCSV: () => {
     const { issues } = get();
+    console.log('[Store] exportToCSV called, issues count:', issues.length);
     const headers = 'ID,Title,Status,Priority,Assignee,Created,Updated\n';
     const rows = issues.map(i =>
       [
@@ -319,7 +324,9 @@ export const useIssueStore = create<IssueState>((set, get) => ({
         i.updatedAt,
       ].join(','),
     );
-    return headers + rows.join('\n');
+    const csvString = headers + rows.join('\n');
+    console.log('[Store] CSV string generated, length:', csvString.length);
+    return csvString;
   },
 
   setOnlineStatus: (isOnline: boolean) => {

@@ -68,22 +68,36 @@ npm start
 - Tap priority chips (Low, Medium, High, Critical)
 - Tap "Clear" to reset filters
 
-### 4. Create/Edit Issues
+### 4. Create/Edit Issues with Images
 
 - Tap + button (FAB) on Issue List
 - Fill in title (required, 5+ chars)
 - Fill in description (required, 10+ chars)
 - Select priority and status
 - Add assignee (optional)
+- **Add images**: Tap "Gallery" or "Camera" to attach up to 3 images
+- Tap image thumbnail to view full-screen
 - Tap "Create Issue"
 
 ### 5. Issue Actions
 
 - Tap any issue to view details
 - Tap "Edit Issue" to modify
-- Tap "Mark Resolved" to resolve
-- Tap "Close Issue" to close
+- Tap "⏳ Mark In Progress" to start working (for Open issues)
+- Tap "✅ Mark Resolved" to resolve (for Open/In Progress issues)
+- Tap "🔒 Close Issue" to close
 - Tap "Share" to share via native share sheet
+- Tap "Delete Issue" to remove (with confirmation)
+
+### 6. Export Issues
+
+- Go to Issue List tab
+- Tap 📤 Export button (green button in header)
+- Choose format: JSON or CSV
+- **Android**: Share sheet opens - share via any app
+- **iOS**: Data copied to clipboard - paste into any app
+- CSV data can be pasted into Excel, Sheets, Numbers
+- JSON data can be pasted into text editors or Notes
 
 ---
 
@@ -104,9 +118,14 @@ Quick checklist for evaluators:
 - [ ] Login works with demo credentials
 - [ ] Dashboard shows issue counts
 - [ ] Pull-to-refresh loads mock data
-- [ ] Can create new issue
+- [ ] Can create new issue with images
 - [ ] Can edit existing issue
+- [ ] Can mark issue as in progress
 - [ ] Can mark issue as resolved
+- [ ] Can close issue
+- [ ] Can delete issue
+- [ ] Can view image attachments full-screen
+- [ ] Can export issues (JSON/CSV)
 - [ ] Search filters issues correctly
 - [ ] Status filter works
 - [ ] Priority filter works
@@ -134,10 +153,13 @@ Quick checklist for evaluators:
 
 ### Features
 - **All Core Requirements**: ✅ Complete
-- **Bonus Features**: ✅ Dark mode, export, tests, offline sync
-- **UI/UX**: Polished with loading, empty, and error states
+- **All Bonus Features**: ✅ Dark mode, export, tests, offline sync, image attachments
+- **UI/UX**: Polished with custom alerts, loading, empty, and error states
 - **Offline-First**: Full sync with network detection
 - **Error Handling**: Graceful failures with retry logic
+- **Custom Components**: Professional alert dialogs with theme support
+- **Animated Splash**: Beautiful splash screen with gradient and animations
+- **Adaptive Backgrounds**: Theme-aware background images
 
 ### Testing
 - Run tests: `npm test` (requires Jest setup)
@@ -155,10 +177,13 @@ Quick checklist for evaluators:
 - `src/navigation/index.tsx` - Navigation setup
 
 ### UI Components
-- `src/screens/DashboardScreen.tsx` - Dashboard with counts
-- `src/screens/IssueListScreen.tsx` - List with filters
-- `src/screens/CreateEditIssueScreen.tsx` - Form with validation
+- `src/screens/DashboardScreen.tsx` - Dashboard with gradient card and bubbles
+- `src/screens/IssueListScreen.tsx` - List with filters and export
+- `src/screens/CreateEditIssueScreen.tsx` - Form with image attachments
+- `src/screens/SplashScreen.tsx` - Animated splash screen
 - `src/components/NetworkStatusBar.tsx` - Sync status indicator
+- `src/components/CustomAlert.tsx` - Custom styled alert dialogs
+- `src/components/ImagePicker.tsx` - Image attachment component
 
 ### Tests
 - `src/__tests__/issueStore.test.ts` - Store logic tests
@@ -197,71 +222,7 @@ npx expo start --clear
 For questions or issues:
 1. Check `README.md` for detailed documentation
 2. Check `SYNC_TESTING_GUIDE.md` for sync testing
-3. Check `PROJECT_ANALYSIS.md` for feature analysis
 4. Check console logs for debugging info
-
----
-
-## ⏱️ Time Estimates
-
-- **Setup & First Run**: 5 minutes
-- **Basic Feature Testing**: 10 minutes
-- **Offline Sync Testing**: 5 minutes
-- **Code Review**: 20 minutes
-- **Total**: ~40 minutes for complete evaluation
-
----
-
-## 🎯 Evaluation Focus Areas
-
-Based on the assignment rubric:
-
-1. **Functional Completeness** (9.5/10)
-   - All core features ✅
-   - Most bonus features ✅
-   - Missing: Image attachments
-
-2. **Code Structure** (9.5/10)
-   - Clean folder structure ✅
-   - Reusable components ✅
-   - Proper separation of concerns ✅
-
-3. **State Management** (10/10)
-   - Zustand implementation ✅
-   - TypeScript types ✅
-   - Proper async handling ✅
-
-4. **UI Quality** (9/10)
-   - Polished interface ✅
-   - Dark mode ✅
-   - Loading/error states ✅
-
-5. **Error Handling** (9/10)
-   - Form validation ✅
-   - API errors ✅
-   - Sync errors with retry ✅
-
-6. **Local Persistence** (10/10)
-   - AsyncStorage ✅
-   - Sync queue ✅
-   - Conflict resolution ✅
-
-7. **Testing** (8/10)
-   - Unit tests ✅
-   - Sync tests ✅
-   - Could add: Integration tests
-
-8. **README** (10/10)
-   - Comprehensive documentation ✅
-   - Setup instructions ✅
-   - Architecture details ✅
-
-9. **Component/Hooks/Navigation** (9.5/10)
-   - Excellent structure ✅
-   - Custom hooks ✅
-   - Clean navigation ✅
-
-**Expected Overall Score: 9.5/10** 🌟
 
 ---
 

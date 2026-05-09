@@ -34,7 +34,7 @@ export const LoginScreen: React.FC = () => {
   const validate = () => {
     const newErrors: typeof errors = {};
     if (!email.trim()) newErrors.email = 'Email is required';
-    else if (!validateEmail(email)) newErrors.email = 'Enter a valid email address';
+    else if (!validateEmail(email)) newErrors.email = 'Enter a valid email (e.g., user@example.com)';
     if (!password) newErrors.password = 'Password is required';
     else if (password.length < 6) newErrors.password = 'Password must be at least 6 characters';
     setErrors(newErrors);
